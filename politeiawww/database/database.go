@@ -89,7 +89,7 @@ type ProposalCredit struct {
 
 // User record.
 type User struct {
-	ID                              uint64 // Unique id
+	ID                              string // Unique uuid
 	Email                           string // Email address + lookup key.
 	Username                        string // Unique username
 	HashedPassword                  []byte // Blowfish hash
@@ -136,7 +136,7 @@ type Database interface {
 	// User functions
 	UserGet(string) (*User, error)           // Return user record, key is email
 	UserGetByUsername(string) (*User, error) // Return user record given the username
-	UserGetById(uint64) (*User, error)       // Return user record given its id
+	UserGetById(string) (*User, error)       // Return user record given its id
 	UserNew(User) error                      // Add new user
 	UserUpdate(User) error                   // Update existing user
 	AllUsers(callbackFn func(u *User)) error // Iterate all users

@@ -1,13 +1,13 @@
 package localdb
 
 import (
-	"encoding/binary"
 	"path/filepath"
 	"strings"
 	"sync"
 
 	"github.com/badoux/checkmail"
 	"github.com/decred/politeia/politeiawww/database"
+	"github.com/google/uuid"
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
@@ -69,27 +69,8 @@ func (l *localdb) UserNew(u database.User) error {
 		return database.ErrUserExists
 	}
 
-	// Fetch the next unique ID for the user.
-	var lastUserId uint64
-	b, err := l.userdb.Get([]byte(LastUserIdKey), nil)
-	if err != nil {
-		if err != leveldb.ErrNotFound {
-			return err
-		}
-	} else {
-		lastUserId = binary.LittleEndian.Uint64(b) + 1
-	}
-
 	// Set the new id on the user.
-	u.ID = lastUserId
-
-	// Write the new id back to the db.
-	b = make([]byte, 8)
-	binary.LittleEndian.PutUint64(b, lastUserId)
-	err = l.userdb.Put([]byte(LastUserIdKey), b, nil)
-	if err != nil {
-		return err
-	}
+	u.ID = uuid.New().String()
 
 	payload, err := EncodeUser(u)
 	if err != nil {
@@ -164,7 +145,7 @@ func (l *localdb) UserGetByUsername(username string) (*database.User, error) {
 // UserGetById returns a user record given its id, if found in the database.
 //
 // UserGetById satisfies the backend interface.
-func (l *localdb) UserGetById(id uint64) (*database.User, error) {
+func (l *localdb) UserGetById(id string) (*database.User, error) {
 	l.Lock()
 	defer l.Unlock()
 

@@ -75,7 +75,7 @@ type backend struct {
 	params          *chaincfg.Params
 	client          *http.Client                 // politeiad client
 	userPubkeys     map[string]string            // [pubkey][userid]
-	userPaywallPool map[uint64]paywallPoolMember // [userid][paywallPoolMember]
+	userPaywallPool map[string]paywallPoolMember // [userid][paywallPoolMember]
 
 	// These properties are only used for testing.
 	test                   bool
@@ -242,12 +242,7 @@ func (b *backend) hashPassword(password string) ([]byte, error) {
 // getUsernameById returns the username given its id. If the id is invalid,
 // it returns an empty string.
 func (b *backend) getUsernameById(userIdStr string) string {
-	userId, err := strconv.ParseUint(userIdStr, 10, 64)
-	if err != nil {
-		return ""
-	}
-
-	user, err := b.db.UserGetById(userId)
+	user, err := b.db.UserGetById(userIdStr)
 	if err != nil {
 		return ""
 	}
@@ -354,10 +349,10 @@ func (b *backend) initUserPubkeys() error {
 	defer b.Unlock()
 
 	return b.db.AllUsers(func(u *database.User) {
-		userId := strconv.FormatUint(u.ID, 10)
+		// userId := strconv.FormatUint(u.ID, 10)
 		for _, v := range u.Identities {
 			key := hex.EncodeToString(v.Key[:])
-			b.userPubkeys[key] = userId
+			b.userPubkeys[key] = u.ID
 		}
 	})
 }
@@ -370,8 +365,7 @@ func (b *backend) setUserPubkeyAssociaton(user *database.User, publicKey string)
 	b.Lock()
 	defer b.Unlock()
 
-	userID := strconv.FormatUint(user.ID, 10)
-	b.userPubkeys[publicKey] = userID
+	b.userPubkeys[publicKey] = user.ID
 }
 
 // removeUserPubkeyAssociaton removes a public key from the
@@ -681,12 +675,7 @@ func (b *backend) validatePubkeyIsUnique(publicKey string, user *database.User) 
 		return nil
 	}
 
-	userID, err := strconv.ParseUint(userIDStr, 10, 64)
-	if err != nil {
-		return err
-	}
-
-	if user != nil && user.ID == userID {
+	if user != nil && user.ID == userIDStr {
 		return nil
 	}
 
@@ -972,7 +961,7 @@ func (b *backend) CreateLoginReply(user *database.User, lastLoginTime int64) (*w
 
 	reply := www.LoginReply{
 		IsAdmin:         user.Admin,
-		UserID:          strconv.FormatUint(user.ID, 10),
+		UserID:          user.ID,
 		Email:           user.Email,
 		Username:        user.Username,
 		PublicKey:       activeIdentity,
@@ -1795,7 +1784,7 @@ func (b *backend) ProcessSetProposalStatus(sps www.SetProposalStatus, user *data
 			if err != nil {
 				return nil, err
 			}
-			if pr.UserId == strconv.FormatUint(user.ID, 10) {
+			if pr.UserId == user.ID {
 				return nil, v1.UserError{
 					ErrorCode: v1.ErrorStatusReviewerAdminEqualsAuthor,
 				}
@@ -1924,14 +1913,14 @@ func (b *backend) ProcessProposalDetails(propDetails www.ProposalsDetails, user 
 
 	var isUserTheAuthor bool
 	if user != nil {
-		authorID, err := strconv.ParseUint(cachedProposal.UserId, 10, 64)
-		if err != nil {
-			// Only complain and move on since some of the proposals details
-			// can still be sent for a non-admin or a non-author user
-			log.Infof("ProcessProposalDetails: ParseUint failed on '%v': %v", cachedProposal.UserId, err)
-		}
+		// authorID, err := strconv.ParseUint(cachedProposal.UserId, 10, 64)
+		// if err != nil {
+		// 	// Only complain and move on since some of the proposals details
+		// 	// can still be sent for a non-admin or a non-author user
+		// 	log.Infof("ProcessProposalDetails: ParseUint failed on '%v': %v", cachedProposal.UserId, err)
+		// }
 
-		isUserTheAuthor = authorID == user.ID
+		isUserTheAuthor = cachedProposal.UserId == user.ID
 	}
 
 	if !isVettedProposal && !isUserAdmin && !isUserTheAuthor {
@@ -2508,7 +2497,7 @@ func (b *backend) ProcessAuthorizeVote(av www.AuthorizeVote, user *database.User
 		userID, ok := b.userPubkeys[ir.proposalMD.PublicKey]
 		b.RUnlock()
 		if ok {
-			if strconv.FormatUint(user.ID, 10) != userID {
+			if user.ID != userID {
 				return nil, www.UserError{
 					ErrorCode: www.ErrorStatusUserNotAuthor,
 				}
@@ -2779,11 +2768,9 @@ func (b *backend) ProcessVoteStatus(token string) (*www.VoteStatusReply, error) 
 func (b *backend) ProcessUsernamesById(ubi www.UsernamesById) *www.UsernamesByIdReply {
 	var usernames []string
 	for _, userIdStr := range ubi.UserIds {
-		userId, err := strconv.ParseUint(userIdStr, 10, 64)
-		if err != nil {
-			usernames = append(usernames, "")
-			continue
-		}
+		userId := userIdStr
+
+		usernames = append(usernames, "")
 
 		user, err := b.db.UserGetById(userId)
 		if err != nil {
@@ -2855,7 +2842,7 @@ func (b *backend) ProcessUserCommentsVotes(user *database.User, token string) (*
 		b.RLock()
 		id, ok := b.userPubkeys[ucv.Pubkey]
 		b.RUnlock()
-		if ok && id == strconv.Itoa(int(user.ID)) {
+		if ok && id == user.ID {
 			ucvr.CommentsVotes = append(ucvr.CommentsVotes, www.CommentVote{
 				Action:    ucv.Action,
 				CommentID: ucv.CommentID,
@@ -2893,11 +2880,7 @@ func (b *backend) ProcessEditProposal(user *database.User, ep www.EditProposal) 
 			cachedProposal.PublicKey)
 	}
 
-	authorID, err := strconv.ParseUint(authorIDStr, 10, 64)
-	if err != nil {
-		return nil, err
-	}
-	if authorID != user.ID {
+	if authorIDStr != user.ID {
 		return nil, www.UserError{
 			ErrorCode: www.ErrorStatusUserActionNotAllowed,
 		}
@@ -3152,7 +3135,7 @@ func NewBackend(cfg *config) (*backend, error) {
 		db:              db,
 		cfg:             cfg,
 		userPubkeys:     make(map[string]string),
-		userPaywallPool: make(map[uint64]paywallPoolMember),
+		userPaywallPool: make(map[string]paywallPoolMember),
 	}
 
 	// Setup pubkey-userid map

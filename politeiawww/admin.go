@@ -94,7 +94,7 @@ func (b *backend) ProcessEditUser(eu *v1.EditUser, adminUser *database.User) (*v
 	case v1.UserEditExpireResetPasswordVerification:
 		user.ResetPasswordVerificationExpiry = expiredTime
 	case v1.UserEditClearUserPaywall:
-		b.removeUsersFromPool([]uint64{user.ID})
+		b.removeUsersFromPool([]string{user.ID})
 
 		user.NewUserPaywallAddress = ""
 		user.NewUserPaywallAmount = 0

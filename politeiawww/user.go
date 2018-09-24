@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/hex"
-	"strconv"
 
 	"github.com/decred/politeia/politeiawww/api/v1"
 	"github.com/decred/politeia/politeiawww/database"
@@ -10,7 +9,7 @@ import (
 
 func convertWWWUserFromDatabaseUser(user *database.User) v1.User {
 	return v1.User{
-		ID:                              strconv.FormatUint(user.ID, 10),
+		ID:                              user.ID,
 		Admin:                           user.Admin,
 		Email:                           user.Email,
 		Username:                        user.Username,
@@ -49,12 +48,7 @@ func convertWWWIdentityFromDatabaseIdentity(identity database.Identity) v1.UserI
 }
 
 func (b *backend) getUserByIDStr(userIDStr string) (*database.User, error) {
-	userID, err := strconv.ParseUint(userIDStr, 10, 64)
-	if err != nil {
-		return nil, err
-	}
-
-	user, err := b.db.UserGetById(userID)
+	user, err := b.db.UserGetById(userIDStr)
 	if err != nil {
 		return nil, err
 	}

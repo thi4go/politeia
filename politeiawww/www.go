@@ -15,7 +15,6 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime/debug"
-	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -956,14 +955,14 @@ func (p *politeiawww) handleUserProposals(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	userId, err := strconv.ParseUint(up.UserId, 10, 64)
-	if err != nil {
-		RespondWithError(w, r, 0, "handleUserProposals: ParseUint",
-			v1.UserError{
-				ErrorCode: v1.ErrorStatusInvalidInput,
-			})
-		return
-	}
+	// userId, err := strconv.ParseUint(up.UserId, 10, 64)
+	// if err != nil {
+	// 	RespondWithError(w, r, 0, "handleUserProposals: ParseUint",
+	// 		v1.UserError{
+	// 			ErrorCode: v1.ErrorStatusInvalidInput,
+	// 		})
+	// 	return
+	// }
 
 	user, err := p.getSessionUser(r)
 	if err != nil {
@@ -1110,14 +1109,14 @@ func (p *politeiawww) handleUserDetails(w http.ResponseWriter, r *http.Request) 
 	var ud v1.UserDetails
 	ud.UserID = pathParams["userid"]
 
-	userID, err := strconv.ParseUint(ud.UserID, 10, 64)
-	if err != nil {
-		RespondWithError(w, r, 0, "handleUserProposals: ParseUint",
-			v1.UserError{
-				ErrorCode: v1.ErrorStatusInvalidInput,
-			})
-		return
-	}
+	// userID, err := strconv.ParseUint(ud.UserID, 10, 64)
+	// if err != nil {
+	// 	RespondWithError(w, r, 0, "handleUserProposals: ParseUint",
+	// 		v1.UserError{
+	// 			ErrorCode: v1.ErrorStatusInvalidInput,
+	// 		})
+	// 	return
+	// }
 
 	user, err := p.getSessionUser(r)
 	if err != nil {

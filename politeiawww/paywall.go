@@ -80,20 +80,20 @@ func (b *backend) updateUserAsPaid(user *database.User, tx string) error {
 
 func (b *backend) derivePaywallInfo(user *database.User) (string, uint64, int64, error) {
 	address, err := util.DerivePaywallAddress(b.params,
-		b.cfg.PaywallXpub, uint32(user.ID))
+		b.cfg.PaywallXpub, user.ID)
 	if err != nil {
 		err = fmt.Errorf("Unable to derive paywall address #%v "+
-			"for %v: %v", uint32(user.ID), user.Email, err)
+			"for %v: %v", user.ID, user.Email, err)
 	}
 
 	return address, b.cfg.PaywallAmount, time.Now().Unix(), err
 }
 
-func (b *backend) createUserPaywallPoolCopy() map[uint64]paywallPoolMember {
+func (b *backend) createUserPaywallPoolCopy() map[string]paywallPoolMember {
 	b.RLock()
 	defer b.RUnlock()
 
-	poolCopy := make(map[uint64]paywallPoolMember, len(b.userPaywallPool))
+	poolCopy := make(map[string]paywallPoolMember, len(b.userPaywallPool))
 
 	for k, v := range b.userPaywallPool {
 		poolCopy[k] = v
@@ -102,7 +102,7 @@ func (b *backend) createUserPaywallPoolCopy() map[uint64]paywallPoolMember {
 	return poolCopy
 }
 
-func (b *backend) checkForUserPayments(pool map[uint64]paywallPoolMember) (bool, []uint64) {
+func (b *backend) checkForUserPayments(pool map[string]paywallPoolMember) (bool, []string) {
 	var userIDsToRemove []uint64
 
 	for userID, poolMember := range pool {
@@ -223,7 +223,7 @@ func (b *backend) checkForProposalPayments(pool map[uint64]paywallPoolMember) (b
 	return true, userIDsToRemove
 }
 
-func (b *backend) removeUsersFromPool(userIDsToRemove []uint64) {
+func (b *backend) removeUsersFromPool(userIDsToRemove []string) {
 	b.Lock()
 	defer b.Unlock()
 
