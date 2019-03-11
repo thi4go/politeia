@@ -1210,8 +1210,9 @@ type ProposalsStatsReply struct {
 // Websocket commands
 const (
 	WSCError     = "error"
-	WSCPing      = "ping"
 	WSCSubscribe = "subscribe"
+	WSCPing      = "ping"
+	WSCPaywall   = "paywall"
 )
 
 // WSHeader is required to be sent before any other command. The point is to
@@ -1239,4 +1240,11 @@ type WSSubscribe struct {
 // WSPing is a server side push to the client to see if it is still alive.
 type WSPing struct {
 	Timestamp int64 `json:"timestamp"` // Server side timestamp
+}
+
+// WSPaywall is a server side push to notify the client about his paywall payments,
+// and is a replacement to polling manually.
+type WSPaywall struct {
+	ID            string `json:"id"`
+	Confirmations int32  `json:"confirmations"`
 }

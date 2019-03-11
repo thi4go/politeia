@@ -20,6 +20,7 @@ func validCommand(cmd string) bool {
 	switch cmd {
 	case v1.WSCError:
 	case v1.WSCPing:
+	case v1.WSCPaywall:
 	case v1.WSCSubscribe:
 	default:
 		return false
@@ -30,6 +31,7 @@ func validCommand(cmd string) bool {
 func ValidSubscription(cmd string) bool {
 	switch cmd {
 	case v1.WSCPing:
+	case v1.WSCPaywall:
 	default:
 		return false
 	}
@@ -90,6 +92,10 @@ func WSRead(c *websocket.Conn) (string, string, interface{}, error) {
 		var ping v1.WSPing
 		err = c.ReadJSON(&ping)
 		payload = ping
+	case v1.WSCPaywall:
+		var paywall v1.WSPaywall
+		err = c.ReadJSON(&paywall)
+		payload = paywall
 	default:
 		return "", "", nil, ErrInvalidWSCommand
 	}

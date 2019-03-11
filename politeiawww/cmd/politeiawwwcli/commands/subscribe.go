@@ -25,6 +25,7 @@ func (cmd *SubscribeCmd) Execute(args []string) error {
 	// Parse args
 	route := v1.RouteUnauthenticatedWebSocket
 	subscribe := make([]string, 0, len(args))
+
 	for _, v := range args {
 		if v == "auth" {
 			route = v1.RouteAuthenticatedWebSocket
