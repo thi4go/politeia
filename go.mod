@@ -23,11 +23,12 @@ require (
 	github.com/decred/dcrwallet v1.2.3-0.20190128160919-849f7c01c12d
 	github.com/decred/dcrwallet/rpc/walletrpc v0.2.0
 	github.com/decred/go-socks v1.1.0
-	github.com/decred/politeia v0.0.0-20200401194624-9579420b0a51 // indirect
+	github.com/decred/politeia v0.0.0-00010101000000-000000000000 // indirect
 	github.com/decred/slog v1.0.0
 	github.com/go-test/deep v1.0.1
 	github.com/golang/protobuf v1.3.2
-	github.com/google/trillian v1.2.1
+	github.com/google/certificate-transparency-go v1.1.0 // indirect
+	github.com/google/trillian v1.2.2-0.20190612132142-05461f4df60a
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/csrf v1.6.2
 	github.com/gorilla/mux v1.7.3
@@ -35,6 +36,7 @@ require (
 	github.com/gorilla/securecookie v1.1.1
 	github.com/gorilla/sessions v1.2.0
 	github.com/gorilla/websocket v1.4.1
+	github.com/grpc-ecosystem/grpc-gateway v1.14.3 // indirect
 	github.com/h2non/go-is-svg v0.0.0-20160927212452-35e8c4b0612c
 	github.com/jessevdk/go-flags v1.4.0
 	github.com/jinzhu/gorm v1.9.10
@@ -50,3 +52,5 @@ require (
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
 	google.golang.org/grpc v1.24.0
 )
+
+replace github.com/decred/politeia => github.com/thi4go/politeia v0.0.0-20200331190653-07de07497eb0
