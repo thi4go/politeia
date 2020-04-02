@@ -14,14 +14,15 @@ import (
 	"github.com/decred/dcrd/chaincfg"
 	exptypes "github.com/decred/dcrdata/explorer/types/v2"
 	pstypes "github.com/decred/dcrdata/pubsub/types/v3"
-	"github.com/decred/politeia/politeiad/api/v1/mime"
-	"github.com/decred/politeia/politeiad/cache"
-	www "github.com/decred/politeia/politeiawww/api/www/v1"
-	www2 "github.com/decred/politeia/politeiawww/api/www/v2"
-	"github.com/decred/politeia/politeiawww/cmsdatabase"
-	"github.com/decred/politeia/politeiawww/user"
-	utilwww "github.com/decred/politeia/politeiawww/util"
-	"github.com/decred/politeia/util"
+	"github.com/thi4go/politeia/politeiad/api/v1/mime"
+	"github.com/thi4go/politeia/politeiad/cache"
+	www "github.com/thi4go/politeia/politeiawww/api/www/v1"
+	www2 "github.com/thi4go/politeia/politeiawww/api/www/v2"
+	"github.com/thi4go/politeia/politeiawww/cmsdatabase"
+	"github.com/thi4go/politeia/politeiawww/user"
+	utilwww "github.com/thi4go/politeia/politeiawww/util"
+	"github.com/thi4go/politeia/util"
+	"github.com/thi4go/politeia/util/version"
 	"github.com/google/uuid"
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
@@ -160,11 +161,12 @@ func (p *politeiawww) handleVersion(w http.ResponseWriter, r *http.Request) {
 	log.Tracef("handleVersion")
 
 	versionReply := www.VersionReply{
-		Version: www.PoliteiaWWWAPIVersion,
-		Route:   www.PoliteiaWWWAPIRoute,
-		PubKey:  hex.EncodeToString(p.cfg.Identity.Key[:]),
-		TestNet: p.cfg.TestNet,
-		Mode:    p.cfg.Mode,
+		Version:      www.PoliteiaWWWAPIVersion,
+		Route:        www.PoliteiaWWWAPIRoute,
+		BuildVersion: version.BuildMainVersion(),
+		PubKey:       hex.EncodeToString(p.cfg.Identity.Key[:]),
+		TestNet:      p.cfg.TestNet,
+		Mode:         p.cfg.Mode,
 	}
 
 	_, err := p.getSessionUser(w, r)
@@ -335,6 +337,7 @@ func (p *politeiawww) handleBatchProposals(w http.ResponseWriter, r *http.Reques
 func (p *politeiawww) handlePolicy(w http.ResponseWriter, r *http.Request) {
 	// Get the policy command.
 	log.Tracef("handlePolicy")
+
 	reply := &www.PolicyReply{
 		MinPasswordLength:          www.PolicyMinPasswordLength,
 		MinUsernameLength:          www.PolicyMinUsernameLength,
@@ -351,6 +354,7 @@ func (p *politeiawww) handlePolicy(w http.ResponseWriter, r *http.Request) {
 		MaxProposalNameLength:      www.PolicyMaxProposalNameLength,
 		ProposalNameSupportedChars: www.PolicyProposalNameSupportedChars,
 		MaxCommentLength:           www.PolicyMaxCommentLength,
+		BuildInformation:           version.BuildInformation(),
 	}
 
 	util.RespondWithJSON(w, http.StatusOK, reply)

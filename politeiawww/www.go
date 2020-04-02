@@ -23,18 +23,18 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/decred/politeia/mdstream"
-	"github.com/decred/politeia/politeiad/cache"
-	cachedb "github.com/decred/politeia/politeiad/cache/cockroachdb"
-	cms "github.com/decred/politeia/politeiawww/api/cms/v1"
-	www "github.com/decred/politeia/politeiawww/api/www/v1"
-	database "github.com/decred/politeia/politeiawww/cmsdatabase"
-	cmsdb "github.com/decred/politeia/politeiawww/cmsdatabase/cockroachdb"
-	"github.com/decred/politeia/politeiawww/user"
-	userdb "github.com/decred/politeia/politeiawww/user/cockroachdb"
-	"github.com/decred/politeia/politeiawww/user/localdb"
-	"github.com/decred/politeia/util"
-	"github.com/decred/politeia/util/version"
+	"github.com/thi4go/politeia/mdstream"
+	"github.com/thi4go/politeia/politeiad/cache"
+	cachedb "github.com/thi4go/politeia/politeiad/cache/cockroachdb"
+	cms "github.com/thi4go/politeia/politeiawww/api/cms/v1"
+	www "github.com/thi4go/politeia/politeiawww/api/www/v1"
+	database "github.com/thi4go/politeia/politeiawww/cmsdatabase"
+	cmsdb "github.com/thi4go/politeia/politeiawww/cmsdatabase/cockroachdb"
+	"github.com/thi4go/politeia/politeiawww/user"
+	userdb "github.com/thi4go/politeia/politeiawww/user/cockroachdb"
+	"github.com/thi4go/politeia/politeiawww/user/localdb"
+	"github.com/thi4go/politeia/util"
+	"github.com/thi4go/politeia/util/version"
 	"github.com/google/uuid"
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
@@ -272,8 +272,15 @@ func _main() error {
 	}()
 
 	log.Infof("Version : %v", version.String())
+	log.Infof("Build Version: %v", version.BuildMainVersion())
 	log.Infof("Network : %v", activeNetParams.Params.Name)
 	log.Infof("Home dir: %v", loadedCfg.HomeDir)
+
+	// Issue a warning if pi was builded locally and does not
+	// have the main module info available.
+	if version.BuildMainVersion() == "(devel)" {
+		log.Warnf("Warning: no build information available")
+	}
 
 	if loadedCfg.PaywallAmount != 0 && loadedCfg.PaywallXpub != "" {
 		paywallAmountInDcr := float64(loadedCfg.PaywallAmount) / 1e8

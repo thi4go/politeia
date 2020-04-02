@@ -20,16 +20,16 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/decred/politeia/decredplugin"
-	"github.com/decred/politeia/politeiad/api/v1"
-	"github.com/decred/politeia/politeiad/api/v1/identity"
-	"github.com/decred/politeia/politeiad/backend"
-	"github.com/decred/politeia/politeiad/backend/gitbe"
-	"github.com/decred/politeia/politeiad/cache"
-	"github.com/decred/politeia/politeiad/cache/cachestub"
-	"github.com/decred/politeia/politeiad/cache/cockroachdb"
-	"github.com/decred/politeia/util"
-	"github.com/decred/politeia/util/version"
+	"github.com/thi4go/politeia/decredplugin"
+	v1 "github.com/thi4go/politeia/politeiad/api/v1"
+	"github.com/thi4go/politeia/politeiad/api/v1/identity"
+	"github.com/thi4go/politeia/politeiad/backend"
+	"github.com/thi4go/politeia/politeiad/backend/gitbe"
+	"github.com/thi4go/politeia/politeiad/cache"
+	"github.com/thi4go/politeia/politeiad/cache/cachestub"
+	"github.com/thi4go/politeia/politeiad/cache/cockroachdb"
+	"github.com/thi4go/politeia/util"
+	"github.com/thi4go/politeia/util/version"
 	"github.com/gorilla/mux"
 )
 
@@ -1072,8 +1072,15 @@ func _main() error {
 	}()
 
 	log.Infof("Version : %v", version.String())
+	log.Infof("Build Version: %v", version.BuildMainVersion())
 	log.Infof("Network : %v", activeNetParams.Params.Name)
 	log.Infof("Home dir: %v", loadedCfg.HomeDir)
+
+	// Issue a warning if pi was builded locally and does not
+	// have the main module info available.
+	if version.BuildMainVersion() == "(devel)" {
+		log.Warnf("Warning: no build information available")
+	}
 
 	// Create the data directory in case it does not exist.
 	err = os.MkdirAll(loadedCfg.DataDir, 0700)
