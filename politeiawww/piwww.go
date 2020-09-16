@@ -1397,7 +1397,7 @@ func (p *politeiawww) handleProposalInventory(w http.ResponseWriter, r *http.Req
 	user, err := p.getSessionUser(w, r)
 	if err != nil && err != errSessionNotFound {
 		respondWithPiError(w, r,
-			"handleProposalSetStatus: getSessionUser: %v", err)
+			"handleProposalInventory: getSessionUser: %v", err)
 		return
 	}
 	isAdmin := user != nil && user.Admin
