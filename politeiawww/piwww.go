@@ -329,8 +329,11 @@ func convertProposalRecordFromPD(r pd.Record) (*pi.ProposalRecord, error) {
 }
 
 func convertInventoryReplyFromPD(i pd.InventoryByStatusReply) pi.ProposalInventoryReply {
+	// Concatenate both unvetted status from d
+	unvetted := append(i.Unvetted, i.IterationUnvetted...)
+
 	return pi.ProposalInventoryReply{
-		Unvetted:  i.Unvetted,
+		Unvetted:  unvetted,
 		Public:    i.Vetted,
 		Censored:  i.Censored,
 		Abandoned: i.Archived,
@@ -1277,7 +1280,7 @@ func (p *politeiawww) processProposals(ps pi.Proposals, isAdmin bool) (*pi.Propo
 
 // processProposalInventory retrieves the censorship tokens from all records,
 // separated by their status.
-func (p *politeiawww) processProposalInventory() (*pi.ProposalInventoryReply, error) {
+func (p *politeiawww) processProposalInventory(isAdmin bool) (*pi.ProposalInventoryReply, error) {
 	log.Tracef("processProposalInventory")
 
 	i, err := p.inventoryByStatus()
@@ -1286,6 +1289,11 @@ func (p *politeiawww) processProposalInventory() (*pi.ProposalInventoryReply, er
 	}
 
 	reply := convertInventoryReplyFromPD(*i)
+
+	// Remove unvetted data from non-admin users
+	if !isAdmin {
+		reply.Unvetted = []string{}
+	}
 
 	return &reply, nil
 }
@@ -1383,7 +1391,18 @@ func (p *politeiawww) handleProposalSetStatus(w http.ResponseWriter, r *http.Req
 func (p *politeiawww) handleProposalInventory(w http.ResponseWriter, r *http.Request) {
 	log.Tracef("handleProposalInventory")
 
-	ppi, err := p.processProposalInventory()
+	// Get data from session user. This is a public route, so we can
+	// ignore the session not found error. This is done to strip
+	// non-admin users from unvetted record tokens.
+	user, err := p.getSessionUser(w, r)
+	if err != nil && err != errSessionNotFound {
+		respondWithPiError(w, r,
+			"handleProposalSetStatus: getSessionUser: %v", err)
+		return
+	}
+	isAdmin := user != nil && user.Admin
+
+	ppi, err := p.processProposalInventory(isAdmin)
 	if err != nil {
 		respondWithPiError(w, r,
 			"handleProposalInventory: processProposalInventory: %v", err)

@@ -45,7 +45,7 @@ notifications.  It does not render HTML.
 - [`Proposal vote status`](#proposal-vote-status)
 - [`Proposals vote status`](#proposals-vote-status)
 - [`Vote results`](#vote-results)
-- [`Token inventory`](#token-inventory)
+- [`Inventory by status`](#inventory-by-status)
 - [`New comment`](#new-comment)
 - [`Get comments`](#get-comments)
 - [`Like comment`](#like-comment)
@@ -2574,18 +2574,15 @@ Reply:
   }
 ```
 
-### `Token inventory`
+### `Inventory by status`
 
 Retrieve the censorship record tokens of all proposals in the inventory. The
-tokens are categorized by stage of the voting process and sorted according to
-the rules listed below. Unvetted proposal tokens are only returned to admins.
-Unvetted proposals include unvreviewed and censored proposals.
+tokens are categorized by their status. Unvetted proposal tokens are only
+returned to admins. Unvetted proposals include unvreviewed and censored proposals.
 
-Sorted by record timestamp in descending order:
-Pre, Abandonded, Unreviewed, Censored
+Sorted by proposal status:
+Unvetted, Public, Censored, Abandoned
 
-Sorted by voting period end block height in descending order:
-Active, Approved, Rejected
 
 **Route:** `GET v1/proposals/tokeninventory`
 
@@ -2595,30 +2592,26 @@ Active, Approved, Rejected
 
 | | Type | Description |
 | - | - | - |
-| pre | []string | Tokens of all vetted proposals that are pre-vote. |
-| active | []string | Tokens of all vetted proposals with an active voting period. |
-| approved | []string | Tokens of all vetted proposals that have been approved by a vote. |
-| rejected | []string | Tokens of all vetted proposals that have been rejected by a vote. |
+| unvetted | []string | Tokens of all vetted proposals that are pre-vote. |
+| public | []string | Tokens of all vetted proposals with an active voting period. |
+| censored | []string | Tokens of all vetted proposals that have been censored. |
 | abandoned | []string | Tokens of all vetted proposals that have been abandoned. |
-| unreviewed | []string | Tokens of all unreviewed proposals. |
-| censored | []string | Tokens of all censored proposals. |
 
 **Example:**
 Request:
-Path: `v1/proposals/tokeninventory`
+Path: `v1/proposals/inventorybystatus`
 
 Reply:
 
 ```json
 {
-  "pre": [
+  "unvetted": [
     "567ec4cdca78362f725dbb2b8b5161991fe6ba3bb6da1ad3f99067dd4712e48e"
   ],
-  "active": [
+  "public": [
     "79cb792d8a15e83ce6809b2846f4dfdd04a65f5aa674c04926599fabf80c1b62"
   ],
-  "approved": [],
-  "rejected": [],
+  "censored": [],
   "abandoned": [
     "99376fbf7b79e30a7ff778743da46e04ae3b360109fa71011930f4c9a15c4ef5"
   ]
