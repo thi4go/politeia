@@ -336,7 +336,7 @@ func (p *politeiawww) emailUserEmailVerify(email, token, username string) error 
 }
 
 // emailUserKeyUpdate emails the link with the verification token used for
-// setting a new key pair if the email server is set up.
+// setting a new key pair to the provided email address.
 func (p *politeiawww) emailUserKeyUpdate(email, publicKey, token string) error {
 	link, err := p.createEmailLink(www.RouteVerifyUpdateUserKey, "", token, "")
 	if err != nil {
@@ -360,7 +360,7 @@ func (p *politeiawww) emailUserKeyUpdate(email, publicKey, token string) error {
 }
 
 // emailUserPasswordReset emails the link with the reset password verification
-// token if the email server is set up.
+// token to the provided email address.
 func (p *politeiawww) emailUserPasswordReset(email, username, token string) error {
 	// Setup URL
 	u, err := url.Parse(p.cfg.WebServerAddress + www.RouteResetPassword)
@@ -388,8 +388,7 @@ func (p *politeiawww) emailUserPasswordReset(email, username, token string) erro
 }
 
 // emailUserAccountLocked notifies the user its account has been locked and
-// emails the link with the reset password verification token if the email
-// server is set up.
+// emails the link with the reset password verification token.
 func (p *politeiawww) emailUserAccountLocked(email string) error {
 	link, err := p.createEmailLink(ResetPasswordGuiRoute,
 		email, "", "")
@@ -429,8 +428,8 @@ func (p *politeiawww) emailUserPasswordChanged(email string) error {
 	return p.smtp.sendEmailTo(subject, body, recipients)
 }
 
-// emailUserCMSInvite emails the link to invite a user to
-// join the Contractor Management System, if the email server is set up.
+// emailUserCMSInvite emails the invitation link for the Contractor Management
+// System to the provided user email address.
 func (p *politeiawww) emailUserCMSInvite(email, token string) error {
 	link, err := p.createEmailLink(guiRouteRegisterNewUser, "", token, "")
 	if err != nil {
@@ -470,7 +469,7 @@ func (p *politeiawww) emailUserDCCApproved(email string) error {
 }
 
 // emailDCCSubmitted sends email regarding the DCC New event. Sends email
-// to all admins.
+// to the provided email addresses.
 func (p *politeiawww) emailDCCSubmitted(token string, emails []string) error {
 	route := strings.Replace(guiRouteDCCDetails, "{token}", token, 1)
 	l, err := url.Parse(p.cfg.WebServerAddress + route)
@@ -492,7 +491,7 @@ func (p *politeiawww) emailDCCSubmitted(token string, emails []string) error {
 }
 
 // emailDCCSupportOppose sends emails regarding dcc support/oppose event.
-// Sends emails to all admin users.
+// Sends emails to the provided email addresses.
 func (p *politeiawww) emailDCCSupportOppose(token string, emails []string) error {
 	route := strings.Replace(guiRouteDCCDetails, "{token}", token, 1)
 	l, err := url.Parse(p.cfg.WebServerAddress + route)
@@ -514,7 +513,7 @@ func (p *politeiawww) emailDCCSupportOppose(token string, emails []string) error
 }
 
 // emailInvoiceStatusUpdate sends email for the invoice status update event.
-// Sends email for the user regarding that invoice.
+// Send email for the provided user email address.
 func (p *politeiawww) emailInvoiceStatusUpdate(invoiceToken, userEmail string) error {
 	tplData := invoiceStatusUpdate{
 		Token: invoiceToken,
@@ -530,8 +529,8 @@ func (p *politeiawww) emailInvoiceStatusUpdate(invoiceToken, userEmail string) e
 	return p.smtp.sendEmailTo(subject, body, recipients)
 }
 
-// emailInvoiceNotSent emails users that have not yet submitted an invoice
-// for the given month/year
+// emailInvoiceNotSent sends a invoice not sent email notification to the
+// provided email address.
 func (p *politeiawww) emailInvoiceNotSent(email, username string) error {
 	// Set the date to the first day of the previous month.
 	newDate := time.Date(time.Now().Year(), time.Now().Month()-1, 1, 0, 0, 0, 0, time.UTC)
@@ -551,8 +550,8 @@ func (p *politeiawww) emailInvoiceNotSent(email, username string) error {
 	return p.smtp.sendEmailTo(subject, body, recipients)
 }
 
-// emailInvoiceNewComment sends email for the invoice comment event. Sends
-// email to the user regarding that invoice.
+// emailInvoiceNewComment sends email for the invoice new comment event. Send
+// email to the provided user email address.
 func (p *politeiawww) emailInvoiceNewComment(userEmail string) error {
 	var tplData interface{}
 	subject := "New Invoice Comment"
