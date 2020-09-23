@@ -319,14 +319,14 @@ func (p *politeiawww) emailNewUserVerificationLink(email, token, username string
 		return err
 	}
 
-	tplData := newUserEmailTemplateData{
+	tplData := newUserEmail{
 		Username: username,
 		Email:    email,
 		Link:     link,
 	}
 
 	subject := "Verify Your Email"
-	body, err := createBody(templateNewUserEmail, tplData)
+	body, err := createBody(newUserEmailTmpl, tplData)
 	if err != nil {
 		return err
 	}
@@ -350,11 +350,11 @@ func (p *politeiawww) emailResetPasswordVerificationLink(email, username, token 
 
 	// Setup email
 	subject := "Reset Your Password"
-	tplData := resetPasswordEmailTemplateData{
+	tplData := resetPassword{
 		Email: email,
 		Link:  u.String(),
 	}
-	body, err := createBody(templateResetPasswordEmail, tplData)
+	body, err := createBody(resetPasswordTmpl, tplData)
 	if err != nil {
 		return err
 	}
@@ -371,14 +371,14 @@ func (p *politeiawww) emailUpdateUserKeyVerificationLink(email, publicKey, token
 		return err
 	}
 
-	tplData := updateUserKeyEmailTemplateData{
+	tplData := updateUserKey{
 		Email:     email,
 		PublicKey: publicKey,
 		Link:      link,
 	}
 
 	subject := "Verify Your New Identity"
-	body, err := createBody(templateUpdateUserKeyEmail, tplData)
+	body, err := createBody(updateUserKeyTmpl, tplData)
 	if err != nil {
 		return err
 	}
@@ -390,12 +390,12 @@ func (p *politeiawww) emailUpdateUserKeyVerificationLink(email, publicKey, token
 // emailUserPasswordChanged notifies the user that his password was changed,
 // and verifies if he was the author of this action, for security purposes.
 func (p *politeiawww) emailUserPasswordChanged(email string) error {
-	tplData := userPasswordChangedTemplateData{
+	tplData := userPasswordChanged{
 		Email: email,
 	}
 
 	subject := "Password Changed - Security Verification"
-	body, err := createBody(templateUserPasswordChanged, tplData)
+	body, err := createBody(userPasswordChangedTmpl, tplData)
 	if err != nil {
 		return err
 	}
@@ -414,13 +414,13 @@ func (p *politeiawww) emailUserLocked(email string) error {
 		return err
 	}
 
-	tplData := userLockedResetPasswordEmailTemplateData{
+	tplData := userLockedResetPassword{
 		Email: email,
 		Link:  link,
 	}
 
 	subject := "Locked Account - Reset Your Password"
-	body, err := createBody(templateUserLockedResetPassword, tplData)
+	body, err := createBody(userLockedResetPasswordTmpl, tplData)
 	if err != nil {
 		return err
 	}

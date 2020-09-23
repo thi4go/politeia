@@ -188,13 +188,15 @@ var proposalVoteStartedToAuthorTmpl = template.Must(
 		Parse(proposalVoteStartedToAuthorText))
 
 // User events
-type newUserEmailTemplateData struct {
-	Username string
-	Link     string
-	Email    string
+
+// New user - Send verification link to new user
+type newUserEmail struct {
+	Username string // User username
+	Email    string // User email
+	Link     string // Verification link
 }
 
-const templateNewUserEmailRaw = `
+const newUserEmailText = `
 Thanks for joining Politeia, {{.Username}}!
 
 Click the link below to verify your email and complete your registration:
@@ -205,13 +207,17 @@ You are receiving this email because {{.Email}} was used to register for Politei
 If you did not perform this action, please ignore this email.
 `
 
-type updateUserKeyEmailTemplateData struct {
-	Link      string
-	PublicKey string
-	Email     string
+var newUserEmailTmpl = template.Must(
+	template.New("newUserEmail").Parse(newUserEmailText))
+
+// Update user key - Send key verification link to user
+type updateUserKey struct {
+	Link      string // Verification link
+	PublicKey string // User new public key
+	Email     string // User
 }
 
-const templateUpdateUserKeyEmailRaw = `
+const updateUserKeyText = `
 Click the link below to verify your new identity:
 
 {{.Link}}
@@ -221,12 +227,16 @@ was generated for {{.Email}} on Politeia. If you did not perform this action,
 please contact Politeia administrators.
 `
 
-type resetPasswordEmailTemplateData struct {
-	Link  string
-	Email string
+var updateUserKeyTmpl = template.Must(
+	template.New("updateUserKey").Parse(updateUserKeyText))
+
+// Reset password - Send password reset link to user
+type resetPassword struct {
+	Link  string // Password reset link
+	Email string // User email
 }
 
-const templateResetPasswordEmailRaw = `
+const resetPasswordText = `
 Click the link below to continue resetting your password:
 
 {{.Link}}
@@ -237,12 +247,16 @@ compromised. Please contact Politeia administrators through Matrix on the
 #politeia:decred.org channel.
 `
 
-type userLockedResetPasswordEmailTemplateData struct {
-	Link  string
-	Email string
+var resetPasswordTmpl = template.Must(
+	template.New("resetPassword").Parse(resetPasswordText))
+
+// User locked reset password - Send reset pwd link to user
+type userLockedResetPassword struct {
+	Link  string // Reset password link
+	Email string // User email
 }
 
-const templateUserLockedResetPasswordRaw = `
+const userLockedResetPasswordText = `
 Your account was locked due to too many login attempts. You need to reset your
 password in order to unlock your account:
 
@@ -252,16 +266,23 @@ You are receiving this email because someone made too many login attempts for
 {{.Email}} on Politeia. If that was not you, please notify Politeia administrators.
 `
 
-type userPasswordChangedTemplateData struct {
-	Email string
+var userLockedResetPasswordTmpl = template.Must(
+	template.New("userLockedResetPassword").Parse(userLockedResetPasswordText))
+
+// User password changed - Send to user
+type userPasswordChanged struct {
+	Email string // User email
 }
 
-const templateUserPasswordChangedRaw = `
+const userPasswordChangedText = `
 You are receiving this email to notify you that your password has changed for 
 {{.Email}} on Politeia. If you did not perform this action, it is possible that 
 your account has been compromised. Please contact Politeia administrators 
 through Matrix on the #politeia:decred.org channel for further instructions.
 `
+
+var userPasswordChangedTmpl = template.Must(
+	template.New("userPasswordChanged").Parse(userPasswordChangedText))
 
 // CMS events
 type newInviteUserEmailTemplateData struct {
