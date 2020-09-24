@@ -27,5 +27,5 @@ func (cmd *ProposalInventoryCmd) Execute(args []string) error {
 const proposalInventoryHelpMsg = `proposalinventory
 
 Fetch the censorship record tokens for all proposals, separated by their
-status. The unvetted tokens is only returned if the logged in user is an
+status. The unvetted tokens are only returned if the logged in user is an
 admin.`

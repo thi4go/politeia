@@ -48,6 +48,7 @@ type piwww struct {
 	ProposalNew       ProposalNewCmd       `command:"proposalnew"`
 	ProposalEdit      ProposalEditCmd      `command:"proposaledit"`
 	ProposalSetStatus ProposalSetStatusCmd `command:"proposalsetstatus"`
+	ProposalInventory ProposalInventoryCmd `command:"proposalinventory"`
 
 	// Comments commands
 	CommentNew    CommentNewCmd    `command:"commentnew" description:"(user) create a new comment"`
@@ -83,7 +84,6 @@ type piwww struct {
 	Policy             PolicyCmd                `command:"policy" description:"(public) get the server policy"`
 	ProposalDetails    ProposalDetailsCmd       `command:"proposaldetails" description:"(public) get the details of a proposal"`
 	ProposalPaywall    ProposalPaywallCmd       `command:"proposalpaywall" description:"(user)   get proposal paywall details for the logged in user"`
-	ProposalInventory  ProposalInventoryCmd     `command:"proposalinventory" description:"(public) get the censorship record tokens of all proposals separated by their status"`
 	RescanUserPayments RescanUserPaymentsCmd    `command:"rescanuserpayments" description:"(admin)  rescan a user's payments to check for missed payments"`
 	ResendVerification ResendVerificationCmd    `command:"resendverification" description:"(public) resend the user verification email"`
 	ResetPassword      shared.ResetPasswordCmd  `command:"resetpassword" description:"(public) reset the password for a user that is not logged in"`
