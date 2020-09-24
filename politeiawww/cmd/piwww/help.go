@@ -76,7 +76,6 @@ func (cmd *HelpCmd) Execute(args []string) error {
 		fmt.Printf("%s\n", proposalEditHelpMsg)
 	case "proposalsetstatus":
 		fmt.Printf("%s\n", proposalSetStatusHelpMsg)
-
 	case "proposaldetails":
 		fmt.Printf("%s\n", proposalDetailsHelpMsg)
 	case "userproposals":
@@ -85,6 +84,8 @@ func (cmd *HelpCmd) Execute(args []string) error {
 		fmt.Printf("%s\n", vettedProposalsHelpMsg)
 	case "batchproposals":
 		fmt.Printf("%s\n", shared.BatchProposalsHelpMsg)
+	case "proposalinventory":
+		fmt.Printf("%s\n", shared.ProposalInventoryHelpMsg)
 
 	// Comment commands
 	case "commentnew":
