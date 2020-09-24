@@ -85,7 +85,7 @@ func (cmd *HelpCmd) Execute(args []string) error {
 	case "batchproposals":
 		fmt.Printf("%s\n", shared.BatchProposalsHelpMsg)
 	case "proposalinventory":
-		fmt.Printf("%s\n", shared.ProposalInventoryHelpMsg)
+		fmt.Printf("%s\n", proposalInventoryHelpMsg)
 
 	// Comment commands
 	case "commentnew":
