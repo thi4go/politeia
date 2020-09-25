@@ -89,9 +89,9 @@ Arguments:
 
 Flags:
  --unvetted     (bool, optional) Request for unvetted proposals instead of
-								 vetted ones.
+                                 vetted ones.
  --includefiles (bool, optional) Include proposal files in the returned
-								 proposal records.
+                                 proposal records.
 
 Example:
  piwww proposals <token,version> <token,version> ...
