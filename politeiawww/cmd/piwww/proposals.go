@@ -5,6 +5,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 
 	pi "github.com/decred/politeia/politeiawww/api/pi/v1"
@@ -52,6 +53,9 @@ func (cmd *ProposalsCmd) Execute(args []string) error {
 			// Version provided
 			r.Token = tokenAndVersion[0]
 			r.Version = tokenAndVersion[1]
+		default:
+			return fmt.Errorf("invalid format for proposal request. check " +
+				"the help command for usage example")
 		}
 
 		requests = append(requests, r)
@@ -81,7 +85,7 @@ comma-separated. Providing only the token will default to the latest proposal
 version.
 
 Arguments:
-1. proposals	([]string, required)	Proposals request
+1. proposals ([]string, required) Proposals request
 
 Flags:
  --unvetted     (bool, optional) Request for unvetted proposals instead of
