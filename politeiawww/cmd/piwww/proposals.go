@@ -88,4 +88,7 @@ Flags:
 								 vetted ones.
  --includefiles (bool, optional) Include proposal files in the returned
 								 proposal records.
+
+Example:
+ piwww proposals <token,version> <token,version> ...
 `
