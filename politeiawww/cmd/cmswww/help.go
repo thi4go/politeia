@@ -40,7 +40,7 @@ func (cmd *HelpCmd) Execute(args []string) error {
 	case "censorcomment":
 		fmt.Printf("%s\n", censorCommentHelpMsg)
 	case "manageuser":
-		fmt.Printf("%s\n", shared.ManageUserHelpMsg)
+		fmt.Printf("%s\n", shared.UserManageHelpMsg)
 	case "cmsmanageuser":
 		fmt.Printf("%s\n", cmsManageUserHelpMsg)
 	case "version":
@@ -50,7 +50,7 @@ func (cmd *HelpCmd) Execute(args []string) error {
 	case "resetpassword":
 		fmt.Printf("%s\n", shared.ResetPasswordHelpMsg)
 	case "updateuserkey":
-		fmt.Printf("%s\n", shared.UpdateUserKeyHelpMsg)
+		fmt.Printf("%s\n", shared.UserUpdateKeyHelpMsg)
 	case "users":
 		fmt.Printf("%s\n", shared.UsersHelpMsg)
 	case "userdetails":

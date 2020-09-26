@@ -5,13 +5,13 @@
 package main
 
 import (
-	"github.com/decred/politeia/politeiawww/api/www/v1"
+	v1 "github.com/decred/politeia/politeiawww/api/www/v1"
 	"github.com/decred/politeia/politeiawww/cmd/shared"
 )
 
-// ResendVerificationCmd re-sends the user verification email for an unverified
+// resendVerificationCmd re-sends the user verification email for an unverified
 // user.
-type ResendVerificationCmd struct {
+type resendVerificationCmd struct {
 	Args struct {
 		Email     string `positional-arg-name:"email"`     // User email
 		PublicKey string `positional-arg-name:"publickey"` // User public key
@@ -19,7 +19,7 @@ type ResendVerificationCmd struct {
 }
 
 // Execute executes the resend verification command.
-func (cmd *ResendVerificationCmd) Execute(args []string) error {
+func (cmd *resendVerificationCmd) Execute(args []string) error {
 	rv := v1.ResendVerification{
 		Email:     cmd.Args.Email,
 		PublicKey: cmd.Args.PublicKey,
@@ -53,9 +53,4 @@ been disabled on politeiawww.
 
 Arguments:
 1. email        (string, required)   User email address
-2. publickey    (string, required)   User public key
-
-Result:
-{
-  "verificationtoken"   (string)  Verification token for the user
-}`
+2. publickey    (string, required)   User public key`

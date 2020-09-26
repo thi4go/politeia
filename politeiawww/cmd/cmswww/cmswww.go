@@ -80,7 +80,7 @@ type cmswww struct {
 	Login                  shared.LoginCmd           `command:"login" description:"(public) login to Politeia"`
 	Logout                 shared.LogoutCmd          `command:"logout" description:"(public) logout of Politeia"`
 	CMSManageUser          CMSManageUserCmd          `command:"cmsmanageuser" description:"(admin)  edit certain properties of the specified user"`
-	ManageUser             shared.ManageUserCmd      `command:"manageuser" description:"(admin)  edit certain properties of the specified user"`
+	ManageUser             shared.UserManageCmd      `command:"manageuser" description:"(admin)  edit certain properties of the specified user"`
 	Me                     shared.MeCmd              `command:"me" description:"(user)   get user details for the logged in user"`
 	NewDCC                 NewDCCCmd                 `command:"newdcc" description:"(user)   creates a new dcc proposal"`
 	NewDCCComment          NewDCCCommentCmd          `command:"newdcccomment" description:"(user)   creates a new comment on a dcc proposal"`
@@ -100,7 +100,7 @@ type cmswww struct {
 	SupportOpposeDCC       SupportOpposeDCCCmd       `command:"supportopposedcc" description:"(user)   support or oppose a given DCC"`
 	TestRun                TestRunCmd                `command:"testrun" description:"         test cmswww routes"`
 	TokenInventory         TokenInventoryCmd         `command:"tokeninventory" description:"(user) get the censorship record tokens of all proposals (passthrough)"`
-	UpdateUserKey          shared.UpdateUserKeyCmd   `command:"updateuserkey" description:"(user)   generate a new identity for the logged in user"`
+	UpdateUserKey          shared.UserUpdateKeyCmd   `command:"updateuserkey" description:"(user)   generate a new identity for the logged in user"`
 	UserDetails            UserDetailsCmd            `command:"userdetails" description:"(user)   get current cms user details"`
 	UserInvoices           UserInvoicesCmd           `command:"userinvoices" description:"(user)   get all invoices submitted by a specific user"`
 	UserSubContractors     UserSubContractorsCmd     `command:"usersubcontractors" description:"(user)   get all users that are linked to the user"`
