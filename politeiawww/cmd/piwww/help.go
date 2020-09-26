@@ -62,6 +62,8 @@ func (cmd *HelpCmd) Execute(args []string) error {
 		fmt.Printf("%s\n", userPendingPaymentHelpMsg)
 	case "rescanuserpayments":
 		fmt.Printf("%s\n", rescanUserPaymentsHelpMsg)
+	case "proposalpaywall":
+		fmt.Printf("%s\n", proposalPaywallHelpMsg)
 	case "verifyuserpayment":
 		fmt.Printf("%s\n", verifyUserPaymentHelpMsg)
 	case "resendverification":
