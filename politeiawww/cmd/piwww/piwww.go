@@ -78,11 +78,11 @@ type piwww struct {
 	UserDetails            userDetailsCmd               `command:"userdetails" description:"(public) get the details of a user profile"`
 	UserPaymentsRescan     userPaymentsRescanCmd        `command:"userpaymentsrescan" description:"(admin) rescan a user's payments to check for missed payments"`
 	UserPendingPayment     userPendingPaymentCmd        `command:"userpendingpayment" description:"(user) get details for a pending payment for the logged in user"`
-	UserVerifyEmail        userVerifyEmailCmd           `command:"userverifyemail" description:"(public) verify a user's email address"`
-	UserVerifyPayment      userVerifyPaymentCmd         `command:"userverifypayment" description:"(user) check if the logged in user has paid their user registration fee"`
+	UserEmailVerify        userEmailVerifyCmd           `command:"useremailverify" description:"(public) verify a user's email address"`
+	UserPaymentVerify      userPaymentVerifyCmd         `command:"userpaymentverify" description:"(user) check if the logged in user has paid their user registration fee"`
 	UserVerificationResend userVerificationResendCmd    `command:"userverificationresend" description:"(public) resend the user verification email"`
 	UserManage             shared.UserManageCmd         `command:"usermanage" description:"(admin) edit certain properties of the specified user"`
-	UserUpdateKey          shared.UserUpdateKeyCmd      `command:"userupdatekey" description:"(user) generate a new identity for the logged in user"`
+	UserKeyUpdate          shared.UserKeyUpdateCmd      `command:"userkeyupdate" description:"(user) generate a new identity for the logged in user"`
 	UserUsernameChange     shared.UserUsernameChangeCmd `command:"userusernamechange" description:"(user) change the username for the logged in user"`
 	UserPasswordChange     shared.UserPasswordChangeCmd `command:"userpasswordchange" description:"(user) change the password for the logged in user"`
 	UserPasswordReset      shared.UserPasswordResetCmd  `command:"userpasswordreset" description:"(public) reset the password for a user that is not logged in"`

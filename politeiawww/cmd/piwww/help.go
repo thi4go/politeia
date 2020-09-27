@@ -91,14 +91,14 @@ func (cmd *helpCmd) Execute(args []string) error {
 		fmt.Printf("%s\n", userPaymentsRescanHelpMsg)
 	case "userpendingpayment":
 		fmt.Printf("%s\n", userPendingPaymentHelpMsg)
-	case "userverifyemail":
-		fmt.Printf("%s\n", userVerifyEmailHelpMsg)
-	case "userverifypayment":
-		fmt.Printf("%s\n", userVerifyPaymentHelpMsg)
+	case "useremailverify":
+		fmt.Printf("%s\n", userEmailVerifyHelpMsg)
+	case "userpaymentverify":
+		fmt.Printf("%s\n", userPaymentVerifyHelpMsg)
 	case "usermanage":
 		fmt.Printf("%s\n", shared.UserManageHelpMsg)
-	case "userupdatekey":
-		fmt.Printf("%s\n", shared.UserUpdateKeyHelpMsg)
+	case "userkeyupdate":
+		fmt.Printf("%s\n", shared.UserKeyUpdateHelpMsg)
 	case "userverificationresend":
 		fmt.Printf("%s\n", userVerificationResendHelpMsg)
 	case "userusernamechange":

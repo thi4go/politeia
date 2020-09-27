@@ -100,7 +100,7 @@ type cmswww struct {
 	SupportOpposeDCC       SupportOpposeDCCCmd          `command:"supportopposedcc" description:"(user)   support or oppose a given DCC"`
 	TestRun                TestRunCmd                   `command:"testrun" description:"         test cmswww routes"`
 	TokenInventory         TokenInventoryCmd            `command:"tokeninventory" description:"(user) get the censorship record tokens of all proposals (passthrough)"`
-	UpdateUserKey          shared.UserUpdateKeyCmd      `command:"updateuserkey" description:"(user)   generate a new identity for the logged in user"`
+	UpdateUserKey          shared.UserKeyUpdateCmd      `command:"updateuserkey" description:"(user)   generate a new identity for the logged in user"`
 	UserDetails            UserDetailsCmd               `command:"userdetails" description:"(user)   get current cms user details"`
 	UserInvoices           UserInvoicesCmd              `command:"userinvoices" description:"(user)   get all invoices submitted by a specific user"`
 	UserSubContractors     UserSubContractorsCmd        `command:"usersubcontractors" description:"(user)   get all users that are linked to the user"`

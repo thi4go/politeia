@@ -6,12 +6,12 @@ package main
 
 import "github.com/decred/politeia/politeiawww/cmd/shared"
 
-// userVerifyPaymentCmd checks on the status of the logged in user's
+// userPaymentVerifyCmd checks on the status of the logged in user's
 // registration payment.
-type userVerifyPaymentCmd struct{}
+type userPaymentVerifyCmd struct{}
 
 // Execute executes the verify user payment command.
-func (cmd *userVerifyPaymentCmd) Execute(args []string) error {
+func (cmd *userPaymentVerifyCmd) Execute(args []string) error {
 	vupr, err := client.VerifyUserPayment()
 	if err != nil {
 		return err
@@ -19,9 +19,9 @@ func (cmd *userVerifyPaymentCmd) Execute(args []string) error {
 	return shared.PrintJSON(vupr)
 }
 
-// userVerifyPaymentHelpMsg is the output of the help command when
-// 'userverifypayment' is specified.
-var userVerifyPaymentHelpMsg = `userverifypayment 
+// userPaymentVerifyHelpMsg is the output of the help command when
+// 'userpaymentverify' is specified.
+var userPaymentVerifyHelpMsg = `userpaymentverify 
 
 Check if the currently logged in user has paid their user registration fee.
 

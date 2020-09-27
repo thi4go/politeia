@@ -50,7 +50,7 @@ func (cmd *HelpCmd) Execute(args []string) error {
 	case "resetpassword":
 		fmt.Printf("%s\n", shared.UserPasswordResetHelpMsg)
 	case "updateuserkey":
-		fmt.Printf("%s\n", shared.UserUpdateKeyHelpMsg)
+		fmt.Printf("%s\n", shared.UserKeyUpdateHelpMsg)
 	case "users":
 		fmt.Printf("%s\n", shared.UsersHelpMsg)
 	case "userdetails":
