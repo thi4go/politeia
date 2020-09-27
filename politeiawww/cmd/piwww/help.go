@@ -99,8 +99,8 @@ func (cmd *helpCmd) Execute(args []string) error {
 		fmt.Printf("%s\n", shared.UserManageHelpMsg)
 	case "userupdatekey":
 		fmt.Printf("%s\n", shared.UserUpdateKeyHelpMsg)
-	case "userresendverification":
-		fmt.Printf("%s\n", userResendVerificationHelpMsg)
+	case "userverificationresend":
+		fmt.Printf("%s\n", userVerificationResendHelpMsg)
 	case "userusernamechange":
 		fmt.Printf("%s\n", shared.UserUsernameChangeHelpMsg)
 	case "userpasswordchange":

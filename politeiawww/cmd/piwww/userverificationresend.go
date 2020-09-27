@@ -9,9 +9,9 @@ import (
 	"github.com/decred/politeia/politeiawww/cmd/shared"
 )
 
-// userResendVerificationCmd re-sends the user verification email for an unverified
+// userVerificationResendCmd re-sends the user verification email for an unverified
 // user.
-type userResendVerificationCmd struct {
+type userVerificationResendCmd struct {
 	Args struct {
 		Email     string `positional-arg-name:"email"`     // User email
 		PublicKey string `positional-arg-name:"publickey"` // User public key
@@ -19,7 +19,7 @@ type userResendVerificationCmd struct {
 }
 
 // Execute executes the resend verification command.
-func (cmd *userResendVerificationCmd) Execute(args []string) error {
+func (cmd *userVerificationResendCmd) Execute(args []string) error {
 	rv := v1.ResendVerification{
 		Email:     cmd.Args.Email,
 		PublicKey: cmd.Args.PublicKey,
@@ -38,9 +38,9 @@ func (cmd *userResendVerificationCmd) Execute(args []string) error {
 	return shared.PrintJSON(rvr)
 }
 
-// userResendVerificationHelpMsg is the output of the help command when
-// 'resendverification' is specified.
-var userResendVerificationHelpMsg = `userresendverification 
+// userVerificationResendHelpMsg is the output of the help command when
+// 'userverificationresend' is specified.
+var userVerificationResendHelpMsg = `userverificationresend 
 
 Resend the user verification email.  The user is only allowed to resend the
 verification email one time before they must wait for the verification token to

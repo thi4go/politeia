@@ -80,7 +80,7 @@ type piwww struct {
 	UserPendingPayment     userPendingPaymentCmd        `command:"userpendingpayment" description:"(user) get details for a pending payment for the logged in user"`
 	UserVerifyEmail        userVerifyEmailCmd           `command:"userverifyemail" description:"(public) verify a user's email address"`
 	UserVerifyPayment      userVerifyPaymentCmd         `command:"userverifypayment" description:"(user) check if the logged in user has paid their user registration fee"`
-	UserResendVerification userResendVerificationCmd    `command:"userresendverification" description:"(public) resend the user verification email"`
+	UserVerificationResend userVerificationResendCmd    `command:"userverificationresend" description:"(public) resend the user verification email"`
 	UserManage             shared.UserManageCmd         `command:"usermanage" description:"(admin) edit certain properties of the specified user"`
 	UserUpdateKey          shared.UserUpdateKeyCmd      `command:"userupdatekey" description:"(user) generate a new identity for the logged in user"`
 	UserUsernameChange     shared.UserUsernameChangeCmd `command:"userusernamechange" description:"(user) change the username for the logged in user"`
