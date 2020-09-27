@@ -36,8 +36,6 @@ func (cmd *helpCmd) Execute(args []string) error {
 		fmt.Printf("%s\n", proposalsHelpMsg)
 	case "proposalinventory":
 		fmt.Printf("%s\n", proposalInventoryHelpMsg)
-	case "proposalsvetted":
-		fmt.Printf("%s\n", proposalsVettedHelpMsg)
 
 	// Comment commands
 	case "commentnew":
@@ -83,28 +81,34 @@ func (cmd *helpCmd) Execute(args []string) error {
 		fmt.Printf("%s\n", policyHelpMsg)
 
 	// User commands
-	case "userdetails":
-		fmt.Printf("%s\n", userDetailsHelpMsg)
-	case "useredit":
-		fmt.Printf("%s\n", userEditHelpMsg)
 	case "usernew":
 		fmt.Printf("%s\n", userNewHelpMsg)
+	case "useredit":
+		fmt.Printf("%s\n", userEditHelpMsg)
+	case "userdetails":
+		fmt.Printf("%s\n", userDetailsHelpMsg)
 	case "userpaymentsrescan":
 		fmt.Printf("%s\n", userPaymentsRescanHelpMsg)
 	case "userpendingpayment":
 		fmt.Printf("%s\n", userPendingPaymentHelpMsg)
-	case "userproposals":
-		fmt.Printf("%s\n", userProposalsHelpMsg)
-	case "users":
-		fmt.Printf("%s\n", shared.UsersHelpMsg)
-	case "usermanage":
-		fmt.Printf("%s\n", shared.UserManageHelpMsg)
-	case "userupdatekey":
-		fmt.Printf("%s\n", shared.UserUpdateKeyHelpMsg)
 	case "userverifyemail":
 		fmt.Printf("%s\n", userVerifyEmailHelpMsg)
 	case "userverifypayment":
 		fmt.Printf("%s\n", userVerifyPaymentHelpMsg)
+	case "usermanage":
+		fmt.Printf("%s\n", shared.UserManageHelpMsg)
+	case "userupdatekey":
+		fmt.Printf("%s\n", shared.UserUpdateKeyHelpMsg)
+	case "userresendverification":
+		fmt.Printf("%s\n", userResendVerificationHelpMsg)
+	case "userusernamechange":
+		fmt.Printf("%s\n", shared.UserUsernameChangeHelpMsg)
+	case "userpasswordchange":
+		fmt.Printf("%s\n", shared.UserPasswordChangeHelpMsg)
+	case "userpasswordreset":
+		fmt.Printf("%s\n", shared.UserPasswordResetHelpMsg)
+	case "users":
+		fmt.Printf("%s\n", shared.UsersHelpMsg)
 
 	case "proposalpaywall":
 		fmt.Printf("%s\n", proposalPaywallHelpMsg)
@@ -116,14 +120,6 @@ func (cmd *helpCmd) Execute(args []string) error {
 		fmt.Printf("%s\n", shared.LogoutHelpMsg)
 	case "me":
 		fmt.Printf("%s\n", shared.MeHelpMsg)
-	case "changepassword":
-		fmt.Printf("%s\n", shared.ChangePasswordHelpMsg)
-	case "changeusername":
-		fmt.Printf("%s\n", shared.ChangeUsernameHelpMsg)
-	case "resetpassword":
-		fmt.Printf("%s\n", shared.ResetPasswordHelpMsg)
-	case "resendverification":
-		fmt.Printf("%s\n", resendVerificationHelpMsg)
 
 	// Websocket commands
 	case "subscribe":

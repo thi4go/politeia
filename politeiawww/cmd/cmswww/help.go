@@ -32,9 +32,9 @@ func (cmd *HelpCmd) Execute(args []string) error {
 	case "logout":
 		fmt.Printf("%s\n", shared.LogoutHelpMsg)
 	case "changepassword":
-		fmt.Printf("%s\n", shared.ChangePasswordHelpMsg)
+		fmt.Printf("%s\n", shared.UserPasswordChangeHelpMsg)
 	case "changeusername":
-		fmt.Printf("%s\n", shared.ChangeUsernameHelpMsg)
+		fmt.Printf("%s\n", shared.UserUsernameChangeHelpMsg)
 	case "newcomment":
 		fmt.Printf("%s\n", newCommentHelpMsg)
 	case "censorcomment":
@@ -48,7 +48,7 @@ func (cmd *HelpCmd) Execute(args []string) error {
 	case "me":
 		fmt.Printf("%s\n", shared.MeHelpMsg)
 	case "resetpassword":
-		fmt.Printf("%s\n", shared.ResetPasswordHelpMsg)
+		fmt.Printf("%s\n", shared.UserPasswordResetHelpMsg)
 	case "updateuserkey":
 		fmt.Printf("%s\n", shared.UserUpdateKeyHelpMsg)
 	case "users":
