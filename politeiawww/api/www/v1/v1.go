@@ -818,9 +818,11 @@ type UserProposalPaywallTxReply struct {
 type UserProposalCredits struct{}
 
 // UserProposalCreditsReply is used to reply to the UserProposalCredits command.
+// It contains unspent credits that the user purchased but did not yet use, and
+// the credits the user already spent to submit proposals.
 type UserProposalCreditsReply struct {
-	UnspentCredits []ProposalCredit `json:"unspentcredits"` // credits that the user has purchased, but have not yet been used to submit proposals (credit price in atoms)
-	SpentCredits   []ProposalCredit `json:"spentcredits"`   // credits that the user has purchased and that have already been used to submit proposals (credit price in atoms)
+	UnspentCredits []ProposalCredit `json:"unspentcredits"`
+	SpentCredits   []ProposalCredit `json:"spentcredits"`
 }
 
 // UserPaymentsRescan allows an admin to rescan a user's paywall address to
@@ -833,8 +835,9 @@ type UserPaymentsRescan struct {
 }
 
 // UserPaymentsRescanReply is used to reply to the UserPaymentsRescan command.
+// Returns the credits that were created by the rescan.
 type UserPaymentsRescanReply struct {
-	NewCredits []ProposalCredit `json:"newcredits"` // Credits that were created by the rescan
+	NewCredits []ProposalCredit `json:"newcredits"`
 }
 
 // NewProposal attempts to submit a new proposal.
