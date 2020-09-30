@@ -102,13 +102,16 @@ Update record: 9dfe084fccb7f27c0000
 
 You can update the status of an unvetted record using one of the following
 statuses:
-- `publish` - make the record a public, vetted record.
-- `censor` - keep the record unvetted and mark as censored.
+- `censor`     - keep the record unvetted and mark as censored.
+- `public`     - make the record a public, vetted record.
+- `unreviewed` - make the record be in a unreviewed changes status.
+- `archived`   - archive the record.
 
-Note `token:` is not prefixed to the token in this command.
+Note `token:` is not prefixed to the token in this command. Status change
+validation is done in the backend.
 
 ```
-$ politeia -v -testnet -rpchost 127.0.0.1 -rpcuser=user -rpcpass=pass setunvettedstatus publish 9dfe084fccb7f27c0000
+$ politeia -v -testnet -rpchost 127.0.0.1 -rpcuser=user -rpcpass=pass setunvettedstatus public 0e4a82a370228b710000
 
 Set record status:
   Status   : public
@@ -173,13 +176,29 @@ The token is specified using the argument:
 
 Metadata provided using the `overwritemetadata` argument does not have to
 already exist.
+
 ```
 $ politeia -v -testnet -rpchost 127.0.0.1 -rpcuser=user -rpcpass=pass updatevettedmd \
   'appendmetadata12:{"foo":"bar"}' token:9dfe084fccb7f27c0000  
 
 Update vetted metadata: 9dfe084fccb7f27c0000
   Metadata append   : 12
-`
+```
 
 ## Set vetted status
-TODO
+
+You can update the status of a vetted record using one of the following
+statuses:
+- `censor`     - keep the record unvetted and mark as censored.
+- `public`     - make the record a public, vetted record.
+- `unreviewed` - make the record be in a unreviewed changes status.
+- `archived`   - archive the record.
+
+Note `token:` is not prefixed to the token in this command. Status change
+validation is done in the backend.
+
+```
+$ politeia -v -testnet -rpchost 127.0.0.1 -rpcuser=user -rpcpass=pass setvettedstatus censor 72fe14a914783eafb78adcbcd405e723c3f55ff475043b0d89b2cf71ffc6a2d4 'overwritemetadata12:"zap"'           
+Set record status:
+  Status: censor
+```
