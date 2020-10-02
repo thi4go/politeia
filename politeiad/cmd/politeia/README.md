@@ -104,7 +104,6 @@ You can update the status of an unvetted record using one of the following
 statuses:
 - `censor`     - keep the record unvetted and mark as censored.
 - `public`     - make the record a public, vetted record.
-- `unreviewed` - make the record be in a unreviewed changes status.
 - `archived`   - archive the record.
 
 Note `token:` is not prefixed to the token in this command. Status change
@@ -191,7 +190,6 @@ You can update the status of a vetted record using one of the following
 statuses:
 - `censor`     - keep the record unvetted and mark as censored.
 - `public`     - make the record a public, vetted record.
-- `unreviewed` - make the record be in a unreviewed changes status.
 - `archived`   - archive the record.
 
 Note `token:` is not prefixed to the token in this command. Status change

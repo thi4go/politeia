@@ -1022,8 +1022,6 @@ func convertStatus(s string) (v1.RecordStatusT, error) {
 		return v1.RecordStatusCensored, nil
 	case "public":
 		return v1.RecordStatusPublic, nil
-	case "unreviewed":
-		return v1.RecordStatusUnreviewedChanges, nil
 	case "archived":
 		return v1.RecordStatusArchived, nil
 	}
