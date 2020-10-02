@@ -443,12 +443,12 @@ func proposalInventory() error {
 	}
 
 	// Print response to user
-	unvetted := append(ibsr.Unvetted, ibsr.IterationUnvetted...)
 	fmt.Printf("Inventory by status:\n")
-	fmt.Printf("  Unvetted: %v\n", unvetted)
-	fmt.Printf("  Vetted  : %v\n", ibsr.Vetted)
-	fmt.Printf("  Censored: %v\n", ibsr.Censored)
-	fmt.Printf("  Archived: %v\n", ibsr.Archived)
+	fmt.Printf("  Unvetted         : %v\n", ibsr.Unvetted)
+	fmt.Printf("  IterationUnvetted: %v\n", ibsr.IterationUnvetted)
+	fmt.Printf("  Vetted           : %v\n", ibsr.Vetted)
+	fmt.Printf("  Censored         : %v\n", ibsr.Censored)
+	fmt.Printf("  Archived         : %v\n", ibsr.Archived)
 
 	return nil
 }

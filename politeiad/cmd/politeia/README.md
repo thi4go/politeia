@@ -223,7 +223,7 @@ Set record status:
   Status: censored
 ```
 
-## Proposal inventory by status
+## Inventory by status
 
 The `inventory` command retrieves the censorship record tokens from all records,
 separated by their status.
@@ -232,8 +232,9 @@ separated by their status.
 $ politeia -v -testnet -rpchost 127.0.0.1 -rpcuser=user -rpcpass=pass inventory
 
 Inventory by status:
-  Unvetted: [tokens...]
-  Vetted  : [tokens...]
-  Censored: [tokens...]
-  Archived: [tokens...]
+  Unvetted         : [tokens...]
+  IterationUnvetted: [tokens...]
+  Vetted           : [tokens...]
+  Censored         : [tokens...]
+  Archived         : [tokens...]
 ```
