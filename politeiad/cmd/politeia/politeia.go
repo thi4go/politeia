@@ -377,7 +377,7 @@ func getFile(filename string) (*v1.File, *[sha256.Size]byte, error) {
 	return file, &digest32, nil
 }
 
-func proposalInventory() error {
+func recordInventory() error {
 	// Prepare request
 	challenge, err := util.Random(v1.ChallengeSize)
 	if err != nil {
@@ -1546,7 +1546,7 @@ func _main() error {
 			case "plugininventory":
 				return getPluginInventory()
 			case "inventory":
-				return proposalInventory()
+				return recordInventory()
 			default:
 				return fmt.Errorf("invalid action: %v", a)
 			}
