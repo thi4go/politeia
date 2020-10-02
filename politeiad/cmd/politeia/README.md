@@ -11,7 +11,8 @@ Available commands:
 `updatevettedmd`  
 `getvetted`  
 `plugin`  
-`plugininventory`  
+`plugininventory`
+`inventory`
 
 ## Obtain politeiad identity
 
@@ -239,4 +240,19 @@ validation is done in the backend.
 $ politeia -v -testnet -rpchost 127.0.0.1 -rpcuser=user -rpcpass=pass setvettedstatus censored 72fe14a914783eafb78adcbcd405e723c3f55ff475043b0d89b2cf71ffc6a2d4 'overwritemetadata12:"zap"'           
 Set record status:
   Status: censor
+```
+
+## Proposal inventory by status
+
+The `inventory` command retrieves the censorship record tokens from all records,
+separated by their status.
+
+```
+$ politeia -v -testnet -rpchost 127.0.0.1 -rpcuser=user -rpcpass=pass inventory
+
+Inventory by status:
+  Unvetted: [tokens...]
+  Vetted  : [tokens...]
+  Censored: [tokens...]
+  Archived: [tokens...]
 ```
