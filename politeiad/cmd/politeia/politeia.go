@@ -75,7 +75,7 @@ func usage() {
 	fmt.Fprintf(os.Stderr, "  getunvetted       - Retrieve record "+
 		"<id>\n")
 	fmt.Fprintf(os.Stderr, "  setunvettedstatus - Set unvetted record "+
-		"status <censor|public|unreviewed|archived> <id>"+
+		"status <censored|public|archived> <id>"+
 		"[actionmdid:metadata]...\n")
 	fmt.Fprintf(os.Stderr, "  updateunvetted    - Update unvetted record "+
 		"[actionmdid:metadata]... <actionfile:filename>... "+
@@ -86,7 +86,7 @@ func usage() {
 	fmt.Fprintf(os.Stderr, "  updatevettedmd    - Update vetted record "+
 		"metadata [actionmdid:metadata]... token:<token>\n")
 	fmt.Fprintf(os.Stderr, "  setvettedstatus   - Set vetted record "+
-		"status <censor|public|unreviewed|archived> <id>"+
+		"status <censored|archived> <id>"+
 		"[actionmdid:metadata]...\n")
 	fmt.Fprintf(os.Stderr, "\n")
 	fmt.Fprintf(os.Stderr, " metadata<id> is the word metadata followed "+
@@ -1018,7 +1018,7 @@ func getVetted() error {
 
 func convertStatus(s string) (v1.RecordStatusT, error) {
 	switch s {
-	case "censor":
+	case "censored":
 		return v1.RecordStatusCensored, nil
 	case "public":
 		return v1.RecordStatusPublic, nil

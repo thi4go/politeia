@@ -102,9 +102,9 @@ Update record: 9dfe084fccb7f27c0000
 
 You can update the status of an unvetted record using one of the following
 statuses:
-- `censor`     - keep the record unvetted and mark as censored.
-- `public`     - make the record a public, vetted record.
-- `archived`   - archive the record.
+- `censored` - keep the record unvetted and mark as censored.
+- `public`   - make the record a public, vetted record.
+- `archived` - archive the record.
 
 Note `token:` is not prefixed to the token in this command. Status change
 validation is done in the backend.
@@ -188,15 +188,14 @@ Update vetted metadata: 9dfe084fccb7f27c0000
 
 You can update the status of a vetted record using one of the following
 statuses:
-- `censor`     - keep the record unvetted and mark as censored.
-- `public`     - make the record a public, vetted record.
-- `archived`   - archive the record.
+- `censored` - keep the record unvetted and mark as censored.
+- `archived` - archive the record.
 
 Note `token:` is not prefixed to the token in this command. Status change
 validation is done in the backend.
 
 ```
-$ politeia -v -testnet -rpchost 127.0.0.1 -rpcuser=user -rpcpass=pass setvettedstatus censor 72fe14a914783eafb78adcbcd405e723c3f55ff475043b0d89b2cf71ffc6a2d4 'overwritemetadata12:"zap"'           
+$ politeia -v -testnet -rpchost 127.0.0.1 -rpcuser=user -rpcpass=pass setvettedstatus censored 72fe14a914783eafb78adcbcd405e723c3f55ff475043b0d89b2cf71ffc6a2d4 'overwritemetadata12:"zap"'           
 Set record status:
   Status: censor
 ```
