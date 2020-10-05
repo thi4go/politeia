@@ -6,7 +6,6 @@ package main
 
 import (
 	"encoding/hex"
-	"fmt"
 	"strconv"
 
 	pi "github.com/decred/politeia/politeiawww/api/pi/v1"
@@ -22,7 +21,6 @@ type commentNewCmd struct {
 	} `positional-args:"true"`
 
 	// CLI flags
-	Vetted   bool `long:"vetted" optional:"true"`
 	Unvetted bool `long:"unvetted" optional:"true"`
 }
 
@@ -32,17 +30,14 @@ func (cmd *commentNewCmd) Execute(args []string) error {
 	comment := cmd.Args.Comment
 	parentID := cmd.Args.ParentID
 
-	// Verify state
+	// Verify state. Defaults to vetted if the --unvetted flag
+	// is not used.
 	var state pi.PropStateT
 	switch {
-	case cmd.Vetted && cmd.Unvetted:
-		return fmt.Errorf("cannot use --vetted and --unvetted simultaneously")
 	case cmd.Unvetted:
 		state = pi.PropStateUnvetted
-	case cmd.Vetted:
-		state = pi.PropStateVetted
 	default:
-		return fmt.Errorf("must specify either --vetted or unvetted")
+		state = pi.PropStateVetted
 	}
 
 	// Check for user identity
@@ -87,7 +82,7 @@ func (cmd *commentNewCmd) Execute(args []string) error {
 // specified.
 const commentNewHelpMsg = `commentnew "token" "comment"
 
-Comment on proposal as logged in user. 
+Comment on a vetted record as logged in user.
 
 Arguments:
 1. token       (string, required)   Proposal censorship token
@@ -95,6 +90,5 @@ Arguments:
 3. parentID    (string, required if replying to comment)  Id of commment
 
 Flags:
-  --vetted     (bool, optional)    Comment on vetted record.
-  --unvetted   (bool, optional)    Comment on unvetted reocrd.
+  --unvetted   (bool, optional)    Comment on unvetted record.
 `

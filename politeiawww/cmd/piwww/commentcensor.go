@@ -23,7 +23,6 @@ type commentCensorCmd struct {
 	} `positional-args:"true" required:"true"`
 
 	// CLI flags
-	Vetted   bool `long:"vetted" optional:"true"`
 	Unvetted bool `long:"unvetted" optional:"true"`
 }
 
@@ -33,17 +32,14 @@ func (cmd *commentCensorCmd) Execute(args []string) error {
 	commentID := cmd.Args.CommentID
 	reason := cmd.Args.Reason
 
-	// Verify state
+	// Verify state. Defaults to vetted if the --unvetted flag
+	// is not used.
 	var state pi.PropStateT
 	switch {
-	case cmd.Vetted && cmd.Unvetted:
-		return fmt.Errorf("cannot use --vetted and --unvetted simultaneously")
 	case cmd.Unvetted:
 		state = pi.PropStateUnvetted
-	case cmd.Vetted:
-		state = pi.PropStateVetted
 	default:
-		return fmt.Errorf("must specify either --vetted or unvetted")
+		state = pi.PropStateVetted
 	}
 
 	// Check for user identity
@@ -107,7 +103,7 @@ func (cmd *commentCensorCmd) Execute(args []string) error {
 // is specified.
 const commentCensorHelpMsg = `commentcensor "token" "commentID" "reason"
 
-Censor a user comment. Requires admin privileges.
+Censor a user comment on a vetted record. Requires admin privileges.
 
 Arguments:
 1. token       (string, required)   Proposal censorship token
@@ -115,6 +111,5 @@ Arguments:
 3. reason      (string, required)   Reason for censoring the comment
 
 Flags:
-  --vetted     (bool, optional)    Comment on vetted record.
-  --unvetted   (bool, optional)    Comment on unvetted reocrd.
+  --unvetted   (bool, optional)    Comment on unvetted record.
 `

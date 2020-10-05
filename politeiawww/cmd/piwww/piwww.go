@@ -49,10 +49,6 @@ type piwww struct {
 	Logout  shared.LogoutCmd  `command:"logout"`
 	Me      shared.MeCmd      `command:"me"`
 
-	// TODO some of the proposal commands use both the --unvetted and
-	// --vetted flags. Let make them all use only the --unvetted flag.
-	// If --unvetted is not included then its assumed to be a vetted
-	// request.
 	// TODO replace www policies with pi policies
 	// Proposal commands
 	ProposalNew       proposalNewCmd       `command:"proposalnew"`
