@@ -122,22 +122,24 @@ Basic commands
   me                     (user)   Get details of the logged in user
 
 User commands
-  usernew                (public) Create a new user
-  useredit               (user)   Edit the logged in user
-  usermanage             (admin)  Edit a user as an admin
-  useremailverify        (public) Verify email address
-  userverificationresend (public) Resend verification email
-  userpasswordreset      (public) Reset password 
-  userpasswordchange     (user)   Change password
-  userusernamechange     (user)   Change username
-  userkeyupdate          (user)   Update user key (i.e. identity)
-  usertotpset            (user)   Set a TOTP method
-  usertotpverify         (user)   Verify a TOTP method
-  userpaymentverify      (user)   Verify registration payment
-  userpaymentsrescan     (user)   Rescan all user payments
-  userpendingpayment     (user)   Get pending user payments
-  userdetails            (public) Get user details
-  users                  (public) Get users
+  usernew                 (public) Create a new user
+  useredit                (user)   Edit the logged in user
+  usermanage              (admin)  Edit a user as an admin
+  useremailverify         (public) Verify email address
+  userverificationresend  (public) Resend verification email
+  userpasswordreset       (public) Reset password 
+  userpasswordchange      (user)   Change password
+  userusernamechange      (user)   Change username
+  userkeyupdate           (user)   Update user key (i.e. identity)
+  usertotpset             (user)   Set a TOTP method
+  usertotpverify          (user)   Verify a TOTP method
+  userregistrationpayment (user)   Verify registration payment
+  userproposalpaywall     (user)   Get user paywall details
+  userproposalpaywalltx   (user)   Get pending user payments
+  userproposalcredits     (user)   Get user proposal credits
+  userpaymentsrescan      (user)   Rescan all user payments
+  userdetails             (public) Get user details
+  users                   (public) Get users
 
 Proposal commands
   proposalnew            (user)   Submit a new proposal
