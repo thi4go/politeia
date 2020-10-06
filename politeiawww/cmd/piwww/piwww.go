@@ -60,7 +60,7 @@ type piwww struct {
 	UserPaymentsRescan     userPaymentsRescanCmd        `command:"userpaymentsrescan"`
 	UserPendingPayment     userPendingPaymentCmd        `command:"userpendingpayment"`
 	UserDetails            userDetailsCmd               `command:"userdetails"`
-	Users
+	Users                  shared.UsersCmd              `command:"users"`
 
 	// TODO some of the proposal commands use both the --unvetted and
 	// --vetted flags. Let make them all use only the --unvetted flag.
