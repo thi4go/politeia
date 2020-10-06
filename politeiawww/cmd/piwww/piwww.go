@@ -43,24 +43,6 @@ type piwww struct {
 	Logout  shared.LogoutCmd  `command:"logout"`
 	Me      shared.MeCmd      `command:"me"`
 
-	// User commands
-	UserNew                userNewCmd                   `command:"usernew"`
-	UserEdit               userEditCmd                  `command:"useredit"`
-	UserManage             shared.UserManageCmd         `command:"usermanage"`
-	UserEmailVerify        userEmailVerifyCmd           `command:"useremailverify"`
-	UserVerificationResend userVerificationResendCmd    `command:"userverificationresend"`
-	UserPasswordReset      shared.UserPasswordResetCmd  `command:"userpasswordreset"`
-	UserPasswordChange     shared.UserPasswordChangeCmd `command:"userpasswordchange"`
-	UserUsernameChange     shared.UserUsernameChangeCmd `command:"userusernamechange"`
-	UserKeyUpdate          shared.UserKeyUpdateCmd      `command:"userkeyupdate"`
-	UserTOTPSet            shared.UserTOTPSetCmd        `command:"usertotpset"`
-	UserTOTPVerify         shared.UserTOTPVerifyCmd     `command:"usertotpverify"`
-	UserPaymentVerify      userPaymentVerifyCmd         `command:"userpaymentverify"`
-	UserPaymentsRescan     userPaymentsRescanCmd        `command:"userpaymentsrescan"`
-	UserPendingPayment     userPendingPaymentCmd        `command:"userpendingpayment"`
-	UserDetails            userDetailsCmd               `command:"userdetails"`
-	Users                  shared.UsersCmd              `command:"users"`
-
 	// TODO some of the proposal commands use both the --unvetted and
 	// --vetted flags. Let make them all use only the --unvetted flag.
 	// If --unvetted is not included then its assumed to be a vetted
