@@ -237,7 +237,9 @@ func (cmd *proposalEditCmd) Execute(args []string) error {
 // proposalEditHelpMsg is the output of the help command.
 const proposalEditHelpMsg = `editproposal [flags] "token" "indexfile" "attachments" 
 
-Edit a vetted proposal.
+Edit a proposal. This command assumes the proposal is a vetted record. If
+the proposal is unvetted, the --unvetted flag must be used. Requires admin
+priviledges.
 
 Arguments:
 1. token         (string, required) Proposal censorship token

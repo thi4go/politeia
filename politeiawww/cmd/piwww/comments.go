@@ -48,7 +48,9 @@ func (cmd *commentsCmd) Execute(args []string) error {
 // is specified.
 const commentsHelpMsg = `comments "token" 
 
-Get the comments for a vetted proposal.
+Get the comments for a record. This command assumes the record is a vetted
+record. If the record is unvetted, the --unvetted flag must be used. Requires
+admin priviledges.
 
 Arguments:
 1. token       (string, required)   Proposal censorship token

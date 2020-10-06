@@ -104,7 +104,9 @@ func (cmd *commentCensorCmd) Execute(args []string) error {
 // commentCensorHelpMsg is the help command message.
 const commentCensorHelpMsg = `commentcensor "token" "commentID" "reason"
 
-Censor a user comment on a vetted record. Requires admin privileges.
+Censor a user comment. This command assumes the record is a vetted record. If
+the record is unvetted, the --unvetted flag must be used. Requires admin 
+privileges.
 
 Arguments:
 1. token       (string, required)   Proposal censorship token

@@ -106,7 +106,9 @@ func (cmd *proposalStatusSetCmd) Execute(args []string) error {
 // proposalSetStatusHelpMsg is the output of the help command.
 const proposalSetStatusHelpMsg = `proposalsetstatus "token" "status" "reason"
 
-Set the status of a vetted proposal. Requires admin privileges.
+Set the status of a proposal. This command assumes the proposal is a vetted
+record. If the proposal is unvetted, the --unvetted flag must be used. Requires
+admin priviledges.
 
 Valid statuses:
   public

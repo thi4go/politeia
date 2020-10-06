@@ -104,7 +104,9 @@ func (c *commentNewCmd) Execute(args []string) error {
 // commentNewHelpMsg is the help command message.
 const commentNewHelpMsg = `commentnew "token" "comment" "parentid"
 
-Comment on a vetted record as logged in user.
+Comment on a record as logged in user. This command assumes the record is a
+vetted record. If the record is unvetted, the --unvetted flag must be used.
+Requires admin priviledges.
 
 Arguments:
 1. token       (string, required)  Proposal censorship token
