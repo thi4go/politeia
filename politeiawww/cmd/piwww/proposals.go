@@ -78,6 +78,10 @@ func (cmd *proposalsCmd) Execute(args []string) error {
 	if err != nil {
 		return err
 	}
+	err = shared.PrintJSON(reply)
+	if err != nil {
+		return err
+	}
 
 	// Verify proposals
 	vr, err := client.Version()
@@ -90,11 +94,6 @@ func (cmd *proposalsCmd) Execute(args []string) error {
 			return fmt.Errorf("unable to verify proposal %v: %v",
 				p.CensorshipRecord.Token, err)
 		}
-	}
-
-	err = shared.PrintJSON(reply)
-	if err != nil {
-		return err
 	}
 
 	return nil
