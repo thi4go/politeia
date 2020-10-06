@@ -18,6 +18,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrtime/merkle"
 	"github.com/decred/politeia/plugins/comments"
 	"github.com/decred/politeia/plugins/dcrdata"
@@ -43,6 +44,11 @@ const (
 	// Tlog instance IDs
 	tlogIDUnvetted = "unvetted"
 	tlogIDVetted   = "vetted"
+
+	// The following are the IDs of plugin settings that are derived
+	// from the politeiad config. The user does not have to set these
+	// manually.
+	pluginSettingDataDir = "datadir"
 )
 
 var (
@@ -60,32 +66,33 @@ var (
 	// this additional status.
 	statusChanges = map[backend.MDStatusT]map[backend.MDStatusT]struct{}{
 		// Unvetted status changes
-		backend.MDStatusUnvetted: map[backend.MDStatusT]struct{}{
-			backend.MDStatusVetted:   struct{}{},
-			backend.MDStatusCensored: struct{}{},
+		backend.MDStatusUnvetted: {
+			backend.MDStatusVetted:   {},
+			backend.MDStatusCensored: {},
 		},
 
 		// Vetted status changes
-		backend.MDStatusVetted: map[backend.MDStatusT]struct{}{
-			backend.MDStatusCensored: struct{}{},
-			backend.MDStatusArchived: struct{}{},
+		backend.MDStatusVetted: {
+			backend.MDStatusCensored: {},
+			backend.MDStatusArchived: {},
 		},
 
 		// Statuses that do not allow any further transitions
-		backend.MDStatusCensored: map[backend.MDStatusT]struct{}{},
-		backend.MDStatusArchived: map[backend.MDStatusT]struct{}{},
+		backend.MDStatusCensored: {},
+		backend.MDStatusArchived: {},
 	}
 )
 
 // tlogBackend implements the Backend interface.
 type tlogBackend struct {
 	sync.RWMutex
-	shutdown bool
-	homeDir  string
-	dataDir  string
-	unvetted *tlog
-	vetted   *tlog
-	plugins  map[string]plugin // [pluginID]plugin
+	activeNetParams *chaincfg.Params
+	homeDir         string
+	dataDir         string
+	shutdown        bool
+	unvetted        *tlog
+	vetted          *tlog
+	plugins         map[string]plugin // [pluginID]plugin
 
 	// prefixes contains the token prefix to full token mapping for all
 	// records. The prefix is the first n characters of the hex encoded
@@ -225,9 +232,7 @@ func (t *tlogBackend) inventoryGet() map[backend.MDStatusT][]string {
 	inv := make(map[backend.MDStatusT][]string, len(t.inventory))
 	for status, tokens := range t.inventory {
 		tokensCopy := make([]string, len(tokens))
-		for k, v := range tokens {
-			tokensCopy[k] = v
-		}
+		copy(tokensCopy, tokens)
 		inv[status] = tokensCopy
 	}
 
@@ -487,9 +492,7 @@ func filesUpdate(filesCurr, filesAdd []backend.File, filesDel []string) []backen
 	}
 
 	// Apply adds
-	for _, v := range filesAdd {
-		f = append(f, v)
-	}
+	f = append(f, filesAdd...)
 
 	return f
 }
@@ -1385,10 +1388,10 @@ func (t *tlogBackend) SetVettedStatus(token []byte, status backend.MDStatusT, md
 	return r, nil
 }
 
-// Inventory is not currenctly implemented in tlogbe. If the caller which to
-// pull records from the inventory then they should use the InventoryByStatus
-// call to get the tokens of all records in the inventory and pull the required
-// records individually.
+// Inventory is not implemented in tlogbe. If the caller which to pull records
+// from the inventory then they should use the InventoryByStatus call to get
+// the tokens of all records in the inventory and pull the required records
+// individually.
 //
 // This function satisfies the Backend interface.
 func (t *tlogBackend) Inventory(vettedCount, vettedStart, unvettedCount uint, includeFiles, allVersions bool) ([]backend.Record, []backend.Record, error) {
@@ -1397,7 +1400,7 @@ func (t *tlogBackend) Inventory(vettedCount, vettedStart, unvettedCount uint, in
 }
 
 // InventoryByStatus returns the record tokens of all records in the inventory
-// catagorized by MDStatusT.
+// categorized by MDStatusT.
 //
 // This function satisfies the Backend interface.
 func (t *tlogBackend) InventoryByStatus() (*backend.InventoryByStatus, error) {
@@ -1416,30 +1419,49 @@ func (t *tlogBackend) InventoryByStatus() (*backend.InventoryByStatus, error) {
 func (t *tlogBackend) RegisterPlugin(p backend.Plugin) error {
 	log.Tracef("RegisterPlugin: %v", p.ID)
 
+	// Add tlog backend data dir to plugin settings. The plugin data
+	// dir should append the plugin ID onto the tlog backend data dir.
+	p.Settings = append(p.Settings, backend.PluginSetting{
+		Key:   pluginSettingDataDir,
+		Value: t.dataDir,
+	})
+
 	var (
 		client pluginClient
 		err    error
 	)
 	switch p.ID {
 	case comments.ID:
-		client = newCommentsPlugin(t, newBackendClient(t), p.Settings)
+		client, err = newCommentsPlugin(t, newBackendClient(t),
+			p.Settings, p.Identity)
+		if err != nil {
+			return err
+		}
 	case dcrdata.ID:
 		client, err = newDcrdataPlugin(p.Settings)
 		if err != nil {
 			return err
 		}
 	case pi.ID:
-		client = newPiPlugin(t, newBackendClient(t), p.Settings)
+		client, err = newPiPlugin(t, newBackendClient(t), p.Settings)
+		if err != nil {
+			return err
+		}
 	case ticketvote.ID:
-		client = newTicketVotePlugin(t, newBackendClient(t), p.Settings)
+		client, err = newTicketVotePlugin(t, newBackendClient(t),
+			p.Settings, p.Identity, t.activeNetParams)
+		if err != nil {
+			return err
+		}
 	default:
 		return backend.ErrPluginInvalid
 	}
 
 	t.plugins[p.ID] = plugin{
-		id:      p.ID,
-		version: p.Version,
-		client:  client,
+		id:       p.ID,
+		version:  p.Version,
+		settings: p.Settings,
+		client:   client,
 	}
 
 	return nil
@@ -1605,7 +1627,7 @@ func (t *tlogBackend) setup() error {
 }
 
 // New returns a new tlogBackend.
-func New(homeDir, dataDir, dcrtimeHost, encryptionKeyFile, unvettedTrillianHost, unvettedTrillianKeyFile, vettedTrillianHost, vettedTrillianKeyFile string) (*tlogBackend, error) {
+func New(anp *chaincfg.Params, homeDir, dataDir, dcrtimeHost, encryptionKeyFile, unvettedTrillianHost, unvettedTrillianKeyFile, vettedTrillianHost, vettedTrillianKeyFile string) (*tlogBackend, error) {
 	// Setup encryption key file
 	if encryptionKeyFile == "" {
 		// No file path was given. Use the default path.
@@ -1648,13 +1670,14 @@ func New(homeDir, dataDir, dcrtimeHost, encryptionKeyFile, unvettedTrillianHost,
 
 	// Setup tlogbe
 	t := tlogBackend{
-		homeDir:       homeDir,
-		dataDir:       dataDir,
-		unvetted:      unvetted,
-		vetted:        vetted,
-		plugins:       make(map[string]plugin),
-		prefixes:      make(map[string][]byte),
-		vettedTreeIDs: make(map[string]int64),
+		activeNetParams: anp,
+		homeDir:         homeDir,
+		dataDir:         dataDir,
+		unvetted:        unvetted,
+		vetted:          vetted,
+		plugins:         make(map[string]plugin),
+		prefixes:        make(map[string][]byte),
+		vettedTreeIDs:   make(map[string]int64),
 		inventory: map[backend.MDStatusT][]string{
 			backend.MDStatusUnvetted:          make([]string, 0),
 			backend.MDStatusIterationUnvetted: make([]string, 0),

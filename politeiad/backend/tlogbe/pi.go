@@ -108,7 +108,7 @@ func (p *piPlugin) linkedFromLocked(token string) (*linkedFrom, error) {
 		if errors.As(err, &e) && !os.IsExist(err) {
 			// File does't exist. Return an empty linked from list.
 			return &linkedFrom{
-				Tokens: make(map[string]struct{}, 0),
+				Tokens: make(map[string]struct{}),
 			}, nil
 		}
 	}
@@ -663,14 +663,35 @@ func (p *piPlugin) fsck() error {
 	return nil
 }
 
-func newPiPlugin(backend backend.Backend, tlog tlogClient, settings []backend.PluginSetting) *piPlugin {
-	// TODO these should be passed in as plugin settings
-	var (
-		dataDir string
-	)
+func newPiPlugin(backend backend.Backend, tlog tlogClient, settings []backend.PluginSetting) (*piPlugin, error) {
+	// Unpack plugin settings
+	var dataDir string
+	for _, v := range settings {
+		switch v.Key {
+		case pluginSettingDataDir:
+			dataDir = v.Value
+		default:
+			return nil, fmt.Errorf("invalid plugin setting '%v'", v.Key)
+		}
+	}
+
+	// Verify plugin settings
+	switch {
+	case dataDir == "":
+		return nil, fmt.Errorf("plugin setting not found: %v",
+			pluginSettingDataDir)
+	}
+
+	// Create the plugin data directory
+	dataDir = filepath.Join(dataDir, pi.ID)
+	err := os.MkdirAll(dataDir, 0700)
+	if err != nil {
+		return nil, err
+	}
+
 	return &piPlugin{
 		dataDir: dataDir,
 		backend: backend,
 		tlog:    tlog,
-	}
+	}, nil
 }

@@ -10,6 +10,7 @@ import (
 	"regexp"
 
 	v1 "github.com/decred/politeia/politeiad/api/v1"
+	"github.com/decred/politeia/politeiad/api/v1/identity"
 )
 
 var (
@@ -158,10 +159,15 @@ type Plugin struct {
 	ID       string          // Identifier
 	Version  string          // Version
 	Settings []PluginSetting // Settings
+
+	// Identity contains the full identity that the plugin uses to
+	// create receipts, i.e. signatures of user provided data that
+	// prove the backend received and processed a plugin command.
+	Identity *identity.FullIdentity
 }
 
 // InventoryByStatus contains the record tokens of all records in the inventory
-// catagorized by MDStatusT. Each list is sorted by the timestamp of the status
+// categorized by MDStatusT. Each list is sorted by the timestamp of the status
 // change from newest to oldest.
 type InventoryByStatus struct {
 	Unvetted          []string
@@ -215,7 +221,7 @@ type Backend interface {
 	Inventory(uint, uint, uint, bool, bool) ([]Record, []Record, error)
 
 	// InventoryByStatus returns the record tokens of all records in the
-	// inventory catagorized by MDStatusT.
+	// inventory categorized by MDStatusT.
 	InventoryByStatus() (*InventoryByStatus, error)
 
 	// Register a plugin with the backend
