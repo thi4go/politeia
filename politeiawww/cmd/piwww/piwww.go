@@ -87,6 +87,7 @@ type piwww struct {
 	UserEmailVerify        userEmailVerifyCmd           `command:"useremailverify"`
 	UserPaymentVerify      userPaymentVerifyCmd         `command:"userpaymentverify"`
 	UserVerificationResend userVerificationResendCmd    `command:"userverificationresend"`
+	UserProposalPaywall    userProposalPaywallCmd       `command:"userproposalpaywall"`
 	UserManage             shared.UserManageCmd         `command:"usermanage"`
 	UserKeyUpdate          shared.UserKeyUpdateCmd      `command:"userkeyupdate"`
 	UserUsernameChange     shared.UserUsernameChangeCmd `command:"userusernamechange"`
@@ -95,9 +96,6 @@ type piwww struct {
 	UserTOTPSet            shared.UserTOTPSetCmd        `command:"usertotpset"`
 	UserTOTPVerify         shared.UserTOTPVerifyCmd     `command:"usertotpverify"`
 	Users                  shared.UsersCmd              `command:"users"`
-
-	// TODO rename to reflect that its a users route
-	ProposalPaywall proposalPaywallCmd `command:"proposalpaywall"`
 
 	// Websocket commands
 	Subscribe subscribeCmd `command:"subscribe"`
