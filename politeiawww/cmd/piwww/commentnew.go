@@ -45,7 +45,7 @@ func (c *commentNewCmd) Execute(args []string) error {
 	// is not used.
 	var state pi.PropStateT
 	switch {
-	case cmd.Unvetted:
+	case c.Unvetted:
 		state = pi.PropStateUnvetted
 	default:
 		state = pi.PropStateVetted
