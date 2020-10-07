@@ -22,6 +22,6 @@ func (cmd *userProposalCreditsCmd) Execute(args []string) error {
 // 'userproposalcredits' is specified.
 const userProposalCreditsHelpMsg = `userproposalcredits	
 
-Fetch the user's proposal credits.	
+Fetch the logged in user's proposal credits.	
 
 Arguments: None`
