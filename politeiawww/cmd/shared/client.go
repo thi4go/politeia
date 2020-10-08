@@ -51,7 +51,7 @@ func prettyPrintJSON(v interface{}) error {
 }
 
 // userWWWErrorStatus retrieves the human readable error message for an error
-// status code. The status code comes from the www api.
+// status code. The status code error message comes from the www api.
 func userWWWErrorStatus(e www.ErrorStatusT) string {
 	s, ok := www.ErrorStatus[e]
 	if ok {
@@ -65,7 +65,7 @@ func userWWWErrorStatus(e www.ErrorStatusT) string {
 }
 
 // userPiErrorStatus retrieves the human readable error message for an error
-// status code. The status code comes from the pi api.
+// status code. The status code error message comes from the pi api.
 func userPiErrorStatus(e pi.ErrorStatusT) string {
 	s, ok := pi.ErrorStatus[e]
 	if ok {
@@ -74,7 +74,7 @@ func userPiErrorStatus(e pi.ErrorStatusT) string {
 	return ""
 }
 
-// wwwError unmarshals the response body from make request, and parses
+// wwwError unmarshals the response body from makeRequest, and parses
 // the error code and error context from the www api.
 func wwwError(body []byte, statusCode int) error {
 	var ue www.UserError
@@ -98,7 +98,7 @@ func wwwError(body []byte, statusCode int) error {
 	return nil
 }
 
-// piError unmarshals the response body from make request, and parses
+// piError unmarshals the response body from makeRequest, and parses
 // the error code and error context from the pi api.
 func piError(body []byte, statusCode int) error {
 	var ue pi.UserErrorReply
@@ -125,7 +125,8 @@ func piError(body []byte, statusCode int) error {
 // makeRequest sends the provided request to the politeiawww backend specified
 // by the Client config. This function handles verbose printing when specified
 // by the Client config since verbose printing includes details such as the
-// full route and http response codes.
+// full route and http response codes. Caller functions handle status code
+// validation and error checks.
 func (c *Client) makeRequest(method, routeVersion, route string, body interface{}) (int, []byte, error) {
 	// Setup request
 	var requestBody []byte
