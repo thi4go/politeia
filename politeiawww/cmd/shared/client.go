@@ -50,9 +50,9 @@ func prettyPrintJSON(v interface{}) error {
 	return nil
 }
 
-// userErrorStatus retrieves the human readable error message for an error
-// status code. The status code can be from either the pi or cms api.
-func userErrorStatus(e www.ErrorStatusT) string {
+// userWWWErrorStatus retrieves the human readable error message for an error
+// status code. The status code comes from the www api.
+func userWWWErrorStatus(e www.ErrorStatusT) string {
 	s, ok := www.ErrorStatus[e]
 	if ok {
 		return s
@@ -64,11 +64,21 @@ func userErrorStatus(e www.ErrorStatusT) string {
 	return ""
 }
 
+// userPiErrorStatus retrieves the human readable error message for an error
+// status code. The status code comes from the pi api.
+func userPiErrorStatus(e pi.ErrorStatusT) string {
+	s, ok := pi.ErrorStatus[e]
+	if ok {
+		return s
+	}
+	return ""
+}
+
 // makeRequest sends the provided request to the politeiawww backend specified
 // by the Client config. This function handles verbose printing when specified
 // by the Client config since verbose printing includes details such as the
 // full route and http response codes.
-func (c *Client) makeRequest(method, routeVersion, route string, body interface{}) ([]byte, error) {
+func (c *Client) makeRequest(method, routeVersion, route string, body interface{}) (int, []byte, error) {
 	// Setup request
 	var requestBody []byte
 	var queryParams string
@@ -86,7 +96,7 @@ func (c *Client) makeRequest(method, routeVersion, route string, body interface{
 			// will populate the query params.
 			form := url.Values{}
 			if err := schema.NewEncoder().Encode(body, form); err != nil {
-				return nil, err
+				return 0, nil, err
 			}
 			queryParams = "?" + form.Encode()
 
@@ -94,11 +104,11 @@ func (c *Client) makeRequest(method, routeVersion, route string, body interface{
 			var err error
 			requestBody, err = json.Marshal(body)
 			if err != nil {
-				return nil, err
+				return 0, nil, err
 			}
 
 		default:
-			return nil, fmt.Errorf("unknown http method '%v'", method)
+			return 0, nil, fmt.Errorf("unknown http method '%v'", method)
 		}
 	}
 
@@ -112,27 +122,27 @@ func (c *Client) makeRequest(method, routeVersion, route string, body interface{
 		fmt.Printf("Request: POST %v\n", fullRoute)
 		err := prettyPrintJSON(body)
 		if err != nil {
-			return nil, err
+			return 0, nil, err
 		}
 	case c.cfg.Verbose && method == http.MethodPut:
 		fmt.Printf("Request: PUT %v\n", fullRoute)
 		err := prettyPrintJSON(body)
 		if err != nil {
-			return nil, err
+			return 0, nil, err
 		}
 	}
 
 	// Create http request
 	req, err := http.NewRequest(method, fullRoute, bytes.NewReader(requestBody))
 	if err != nil {
-		return nil, err
+		return 0, nil, err
 	}
 	req.Header.Add(www.CsrfToken, c.cfg.CSRF)
 
 	// Send request
 	r, err := c.http.Do(req)
 	if err != nil {
-		return nil, err
+		return 0, nil, err
 	}
 	defer func() {
 		r.Body.Close()
@@ -141,37 +151,37 @@ func (c *Client) makeRequest(method, routeVersion, route string, body interface{
 	responseBody := util.ConvertBodyToByteArray(r.Body, false)
 
 	// Validate response status
-	if r.StatusCode != http.StatusOK {
-		var ue www.UserError
-		err = json.Unmarshal(responseBody, &ue)
-		if err == nil && ue.ErrorCode != 0 {
-			// TODO the user error should be returned in full and the
-			// calling function should print the error message. The reason
-			// is because only the calling function knows what API was used
-			// and thus what error message to print.
-			/*
-				var e error
-				if len(ue.ErrorContext) == 0 {
-					// Error format when an ErrorContext is not included
-					e = fmt.Errorf("%v, %v", r.StatusCode, userErrorStatus(ue.ErrorCode))
-				} else {
-					// Error format when an ErrorContext is included
-					e = fmt.Errorf("%v, %v: %v", r.StatusCode,
-						userErrorStatus(ue.ErrorCode), strings.Join(ue.ErrorContext, ", "))
-				}
-			*/
-			return nil, ue
+	// if r.StatusCode != http.StatusOK {
+	// 	var ue www.UserError
+	// 	err = json.Unmarshal(responseBody, &ue)
+	// 	if err == nil && ue.ErrorCode != 0 {
+	// TODO the user error should be returned in full and the
+	// calling function should print the error message. The reason
+	// is because only the calling function knows what API was used
+	// and thus what error message to print.
+	/*
+		var e error
+		if len(ue.ErrorContext) == 0 {
+			// Error format when an ErrorContext is not included
+			e = fmt.Errorf("%v, %v", r.StatusCode, userErrorStatus(ue.ErrorCode))
+		} else {
+			// Error format when an ErrorContext is included
+			e = fmt.Errorf("%v, %v: %v", r.StatusCode,
+				userErrorStatus(ue.ErrorCode), strings.Join(ue.ErrorContext, ", "))
 		}
+	*/
+	// 	return 0, nil, ue
+	// }
 
-		return nil, fmt.Errorf("%v", r.StatusCode)
-	}
+	// return 0, nil, fmt.Errorf("%v", r.StatusCode)
+	// }
 
 	// Print response details
 	if c.cfg.Verbose {
 		fmt.Printf("Response: %v\n", r.StatusCode)
 	}
 
-	return responseBody, nil
+	return r.StatusCode, responseBody, nil
 }
 
 // Version returns the version information for the politeiawww instance.
@@ -395,14 +405,37 @@ func (c *Client) Logout() (*www.LogoutReply, error) {
 
 // Policy returns the politeiawww policy information.
 func (c *Client) Policy() (*www.PolicyReply, error) {
-	responseBody, err := c.makeRequest(http.MethodGet,
+	statusCode, respBody, err := c.makeRequest(http.MethodGet,
 		www.PoliteiaWWWAPIRoute, www.RoutePolicy, nil)
 	if err != nil {
 		return nil, err
 	}
 
+	// Check status code and unmarshal user error, if it exists
+	if statusCode != http.StatusOK {
+		var ue www.UserError
+		err = json.Unmarshal(respBody, &ue)
+		if err != nil {
+			return nil, fmt.Errorf("unmarshal UserError: %v", err)
+		}
+		if ue.ErrorCode != 0 {
+			var e error
+			if len(ue.ErrorContext) == 0 {
+				// Error format when an ErrorContext is not included
+				e = fmt.Errorf("%v, %v", statusCode,
+					userWWWErrorStatus(ue.ErrorCode))
+			} else {
+				// Error format when an ErrorContext is included
+				e = fmt.Errorf("%v, %v: %v", statusCode,
+					userWWWErrorStatus(ue.ErrorCode),
+					strings.Join(ue.ErrorContext, ", "))
+			}
+			return nil, e
+		}
+	}
+
 	var pr www.PolicyReply
-	err = json.Unmarshal(responseBody, &pr)
+	err = json.Unmarshal(respBody, &pr)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal PolicyReply: %v", err)
 	}
