@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/decred/politeia/politeiad/plugins/comments"
 	pi "github.com/decred/politeia/politeiawww/api/pi/v1"
 	www "github.com/decred/politeia/politeiawww/api/www/v1"
 	"github.com/decred/politeia/politeiawww/user"
@@ -341,14 +342,9 @@ func (p *politeiawww) handleEventProposalStatusChange(ch chan interface{}) {
 	}
 }
 
-func (p *politeiawww) notifyProposalAuthorOnComment(d dataProposalComment) error {
+func (p *politeiawww) notifyProposalAuthorOnComment(d dataProposalComment, pr pi.ProposalRecord) error {
 	// Lookup proposal author to see if they should be sent a
 	// notification.
-	pr, err := p.proposalRecordLatest(d.state, d.token)
-	if err != nil {
-		return fmt.Errorf("proposalRecordLatest %v %v: %v",
-			d.state, d.token, err)
-	}
 	userID, err := uuid.Parse(pr.UserID)
 	if err != nil {
 		return err
@@ -372,10 +368,10 @@ func (p *politeiawww) notifyProposalAuthorOnComment(d dataProposalComment) error
 	// Send notification eamil
 	commentID := strconv.FormatUint(uint64(d.commentID), 10)
 	return p.emailProposalCommentSubmitted(d.token, commentID, d.username,
-		proposalName(*pr), author.Email)
+		proposalName(pr), author.Email)
 }
 
-func (p *politeiawww) notifyParentAuthorOnComment(d dataProposalComment) error {
+func (p *politeiawww) notifyParentAuthorOnComment(d dataProposalComment, pr pi.ProposalRecord) error {
 	// Verify this is a reply comment
 	if d.parentID == 0 {
 		return nil
@@ -383,47 +379,46 @@ func (p *politeiawww) notifyParentAuthorOnComment(d dataProposalComment) error {
 
 	// Lookup the parent comment author to check if they should receive
 	// a reply notification.
+	parentComment, err := p.commentsGet(comments.Get{
+		State:      convertCommentsStateFromPi(d.state),
+		Token:      d.token,
+		CommentIDs: []uint32{d.parentID},
+	})
+	if err != nil {
+		return err
+	}
+	userID, err := uuid.Parse(parentComment.Comments[0].UserID)
+	if err != nil {
+		return err
+	}
+	author, err := p.db.UserGetById(userID)
+	if err != nil {
+		return err
+	}
 
-	// Get the parent comment
-	// TODO
-	return nil
+	// Check if notification should be sent
+	switch {
+	case d.username == author.Username:
+		// Author replied to their own comment
+		return nil
+	case !userNotificationEnabled(*author,
+		www.NotificationEmailCommentOnMyComment):
+		// Author does not have notification bit set on
+		return nil
+	}
 
-	/*
-		// Lookup the parent comment author
-		var author *user.User
-
-		// Check if notification should be sent to author
-		switch {
-		case d.username == author.Username:
-			// Author commented on their own proposal
-			return nil
-		case !userNotificationEnabled(*author,
-			www.NotificationEmailCommentOnMyProposal):
-			// Author does not have notification bit set on
-			return nil
-		}
-
-		// Get proposal. We need this proposal name for the notification.
-		pr, err := p.proposalRecordLatest(d.state, d.token)
-		if err != nil {
-			return fmt.Errorf("proposalRecordLatest %v %v: %v",
-				d.state, d.token, err)
-		}
-
-		// Send notification eamil
-		commentID := strconv.FormatUint(uint64(d.commentID), 10)
-
-		return p.emailProposalCommentReply(d.token, commentID, d.username,
-			proposalName(*pr), author.Email)
-	*/
+	// Send notification email to parent comment author
+	commentID := strconv.FormatUint(uint64(d.commentID), 10)
+	return p.emailProposalCommentReply(d.token, commentID, d.username,
+		proposalName(pr), author.Email)
 }
 
 type dataProposalComment struct {
-	state     pi.PropStateT
-	token     string
-	commentID uint32
-	parentID  uint32
-	username  string // Comment author username
+	state     pi.PropStateT // Proposal state
+	token     string        // Proposal token
+	commentID uint32        // Comment ID
+	parentID  uint32        // Parent comment ID
+	username  string        // Comment author username
 }
 
 func (p *politeiawww) handleEventProposalComment(ch chan interface{}) {
@@ -434,15 +429,24 @@ func (p *politeiawww) handleEventProposalComment(ch chan interface{}) {
 			continue
 		}
 
+		// Fetch the proposal record here to avoid calling this two times
+		// on the notify functions below
+		pr, err := p.proposalRecordLatest(d.state, d.token)
+		if err != nil {
+			err = fmt.Errorf("proposalRecordLatest %v %v: %v",
+				d.state, d.token, err)
+			goto next
+		}
+
 		// Notify the proposal author
-		err := p.notifyProposalAuthorOnComment(d)
+		err = p.notifyProposalAuthorOnComment(d, *pr)
 		if err != nil {
 			err = fmt.Errorf("notifyProposalAuthorOnComment: %v", err)
 			goto next
 		}
 
 		// Notify the parent comment author
-		err = p.notifyParentAuthorOnComment(d)
+		err = p.notifyParentAuthorOnComment(d, *pr)
 		if err != nil {
 			err = fmt.Errorf("notifyParentAuthorOnComment: %v", err)
 			goto next
