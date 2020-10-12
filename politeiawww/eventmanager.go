@@ -415,10 +415,10 @@ func (p *politeiawww) notifyParentAuthorOnComment(d dataProposalComment, proposa
 
 type dataProposalComment struct {
 	state     pi.PropStateT
-	token     string // Proposal token
-	username  string // Comment author username
+	token     string
 	commentID uint32
 	parentID  uint32
+	username  string // Comment author username
 }
 
 func (p *politeiawww) handleEventProposalComment(ch chan interface{}) {
