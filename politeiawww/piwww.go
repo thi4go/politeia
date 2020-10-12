@@ -79,7 +79,7 @@ func tokenIsValid(token string) bool {
 
 	// Verify token is valid hex
 	_, err := hex.DecodeString(token)
-	return err == nil
+	return errors.Is(err, nil)
 }
 
 // tokenIsFullLength returns whether the provided string a is valid, full
@@ -1285,7 +1285,7 @@ func (p *politeiawww) processProposalEdit(pe pi.ProposalEdit, usr user.User) (*p
 	// Get the current proposal
 	curr, err := p.proposalRecordLatest(pe.State, pe.Token)
 	if err != nil {
-		if err == errProposalNotFound {
+		if errors.Is(err, errProposalNotFound) {
 			return nil, pi.UserErrorReply{
 				ErrorCode: pi.ErrorStatusPropNotFound,
 			}
@@ -1584,7 +1584,7 @@ func (p *politeiawww) processCommentNew(cn pi.CommentNew, usr user.User) (*pi.Co
 		// Fetch the proposal so we can see who the author is
 		pr, err := p.proposalRecordLatest(cn.State, cn.Token)
 		if err != nil {
-			if err == errProposalNotFound {
+			if errors.Is(err, errProposalNotFound) {
 				return nil, pi.UserErrorReply{
 					ErrorCode: pi.ErrorStatusPropNotFound,
 				}
@@ -1735,7 +1735,7 @@ func (p *politeiawww) processComments(c pi.Comments, usr *user.User) (*pi.Commen
 			// proposal author.
 			pr, err := p.proposalRecordLatest(c.State, c.Token)
 			if err != nil {
-				if err == errProposalNotFound {
+				if errors.Is(err, errProposalNotFound) {
 					return nil, pi.UserErrorReply{
 						ErrorCode: pi.ErrorStatusPropNotFound,
 					}

@@ -539,7 +539,7 @@ func TestUpdateReadme(t *testing.T) {
 	// Trying to update readme to the same content returns an error, but does
 	// not add any new branches.
 	err = g.UpdateReadme(updatedReadmeContent)
-	if err == nil {
+	if errors.Is(err, nil) {
 		t.Fatal("Updating readme the current content should return an error")
 	}
 
@@ -615,7 +615,7 @@ func TestTokenPrefixGeneration(t *testing.T) {
 		Payload: "this is metadata",
 	}}, files)
 
-	if err == nil {
+	if errors.Is(err, nil) {
 		t.Fatalf("Should only be able to create 16 tokens with unique " +
 			"prefix of length 1, but was able to create 17")
 	}

@@ -203,7 +203,7 @@ func TestUserNew(t *testing.T) {
 
 	// Execute method
 	err = cdb.UserNew(usr)
-	if err == nil {
+	if errors.Is(err, nil) {
 		t.Errorf("expecting error but there was none")
 	}
 
@@ -304,7 +304,7 @@ func TestUserGetByUsername(t *testing.T) {
 
 	// Execute method
 	u, err = cdb.UserGetByUsername(randomUsername)
-	if err == nil {
+	if errors.Is(err, nil) {
 		t.Errorf("expecting error %s, but there was none", expectedError)
 	}
 
@@ -371,7 +371,7 @@ func TestUserGetById(t *testing.T) {
 
 	// Execute method
 	u, err = cdb.UserGetById(randomID)
-	if err == nil {
+	if errors.Is(err, nil) {
 		t.Errorf("expecting error %s, but there was none", expectedError)
 	}
 
@@ -442,7 +442,7 @@ func TestUserGetByPubKey(t *testing.T) {
 
 	// Execute method
 	ur, err = cdb.UserGetByPubKey(randomPubkey)
-	if err == nil {
+	if errors.Is(err, nil) {
 		t.Errorf("expecting error user not found, but there was none")
 	}
 
@@ -515,7 +515,7 @@ func TestUsersGetByPubKey(t *testing.T) {
 
 	// Execute method
 	ur, err = cdb.UsersGetByPubKey([]string{randomPubkey})
-	if err == nil {
+	if errors.Is(err, nil) {
 		t.Errorf("expecting error but there was none")
 	}
 
@@ -589,7 +589,7 @@ func TestAllUsers(t *testing.T) {
 	err = cdb.AllUsers(func(u *user.User) {
 		us = append(us, *u)
 	})
-	if err == nil {
+	if errors.Is(err, nil) {
 		t.Errorf("expecting error but there was none")
 	}
 
@@ -678,7 +678,7 @@ func TestSessionSave(t *testing.T) {
 
 	// Execute method
 	err = cdb.SessionSave(user.Session{})
-	if err == nil {
+	if errors.Is(err, nil) {
 		t.Errorf("expected error but there was none")
 	}
 
@@ -744,7 +744,7 @@ func TestSessionGetByID(t *testing.T) {
 
 	// Execute method
 	s, err = cdb.SessionGetByID(randomID)
-	if err == nil {
+	if errors.Is(err, nil) {
 		t.Errorf("expected error but there was none")
 	}
 
@@ -818,7 +818,7 @@ func TestSessionDeleteByID(t *testing.T) {
 
 	// Execute method
 	err = cdb.SessionDeleteByID(randomID)
-	if err == nil {
+	if errors.Is(err, nil) {
 		t.Errorf("expected error but there was none")
 	}
 
@@ -886,7 +886,7 @@ func TestSessionsDeleteByUserID(t *testing.T) {
 
 	// Execute method
 	err = cdb.SessionsDeleteByUserID(randomID, []string{})
-	if err == nil {
+	if errors.Is(err, nil) {
 		t.Errorf("expecting error but got none")
 	}
 

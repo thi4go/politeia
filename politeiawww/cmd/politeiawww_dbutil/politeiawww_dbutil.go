@@ -533,7 +533,7 @@ func cmdCreateKey() error {
 
 	// Don't allow overwriting an existing key
 	_, err := os.Stat(path)
-	if err == nil {
+	if errors.Is(err, nil) {
 		return fmt.Errorf("file already exists; cannot "+
 			"overwrite %v", path)
 	}

@@ -6,6 +6,7 @@ package main
 
 import (
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -39,7 +40,7 @@ func (cmd *SetInvoiceStatusCmd) Execute(args []string) error {
 	// code or the human readable equivalent.
 	var status cms.InvoiceStatusT
 	s, err := strconv.ParseUint(cmd.Args.Status, 10, 32)
-	if err == nil {
+	if errors.Is(err, nil) {
 		// Numeric status code found
 		status = cms.InvoiceStatusT(s)
 	} else if s, ok := InvoiceStatus[strings.ToLower(cmd.Args.Status)]; ok {

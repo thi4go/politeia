@@ -7,6 +7,7 @@ package tlogbe
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -238,7 +239,7 @@ func (p *dcrdataPlugin) cmdBestBlock(payload string) (string, error) {
 	if fetch {
 		block, err := p.bestBlockHTTP()
 		switch {
-		case err == nil:
+		case errors.Is(err, nil):
 			// We got the best block. Use it.
 			bb = block.Height
 		case stale != 0:

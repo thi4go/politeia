@@ -149,7 +149,7 @@ func cleanAndExpandPath(path string) string {
 	} else {
 		u, err = user.Lookup(userName)
 	}
-	if err == nil {
+	if errors.Is(err, nil) {
 		homeDir = u.HomeDir
 	}
 	// Fallback to CWD if user lookup fails or user has no home directory.
@@ -414,7 +414,7 @@ func loadConfig() (*config, []string, error) {
 		// it's not mounted).
 		var e *os.PathError
 		if errors.As(err, &e) && os.IsExist(err) {
-			if link, lerr := os.Readlink(e.Path); lerr == nil {
+			if link, lerr := os.Readlink(e.Path); errors.Is(lerr, nil) {
 				str := "is symlink %s -> %s mounted?"
 				err = fmt.Errorf(str, e.Path, link)
 			}

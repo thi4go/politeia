@@ -6,6 +6,7 @@ package gitbe
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -171,7 +172,7 @@ func fileCopy(srcName, dstName string) (err error) {
 	}
 	defer func() {
 		cerr := out.Close()
-		if cerr == nil {
+		if errors.Is(cerr, nil) {
 			err = cerr
 		}
 	}()

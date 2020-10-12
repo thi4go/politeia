@@ -938,7 +938,7 @@ func (p *politeia) updateUnvettedMetadata(w http.ResponseWriter, r *http.Request
 		convertFrontendMetadataStream(t.MDOverwrite))
 	if err != nil {
 		// Reply with error if there were no changes
-		if err == backend.ErrNoChanges {
+		if errors.Is(err, backend.ErrNoChanges) {
 			log.Infof("%v update unvetted metadata no changes: %x",
 				remoteAddr(r), token)
 			p.respondWithUserError(w, v1.ErrorStatusNoChanges, nil)

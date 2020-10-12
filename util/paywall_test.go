@@ -61,7 +61,7 @@ func TestDcrStringToAmount(t *testing.T) {
 			t.Errorf("Expected %v for input %s, got %v.",
 				testCase.expectedError, testCase.input, err)
 		}
-		if err == nil {
+		if errors.Is(err, nil) {
 			if result != testCase.output {
 				t.Errorf("Expected %v for input %s, got %v.", testCase.output,
 					testCase.input, result)

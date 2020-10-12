@@ -382,7 +382,7 @@ func cleanAndExpandPath(path string) string {
 	if strings.HasPrefix(path, "~") {
 		var homeDir string
 		usr, err := user.Current()
-		if err == nil {
+		if errors.Is(err, nil) {
 			homeDir = usr.HomeDir
 		} else {
 			// Fallback to CWD

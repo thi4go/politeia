@@ -5,6 +5,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -54,7 +55,7 @@ func (cmd *CMSManageUserCmd) Execute(args []string) error {
 	var domain cms.DomainTypeT
 	if cmd.Domain != "" {
 		d, err := strconv.ParseUint(cmd.Domain, 10, 32)
-		if err == nil {
+		if errors.Is(err, nil) {
 			// Numeric code found
 			domain = cms.DomainTypeT(d)
 		} else if d, ok := domains[cmd.Domain]; ok {
@@ -72,7 +73,7 @@ func (cmd *CMSManageUserCmd) Execute(args []string) error {
 	var contractorType cms.ContractorTypeT
 	if cmd.ContractorType != "" {
 		ct, err := strconv.ParseUint(cmd.ContractorType, 10, 32)
-		if err == nil {
+		if errors.Is(err, nil) {
 			// Numeric code found
 			contractorType = cms.ContractorTypeT(ct)
 		} else if ct, ok := contractorTypes[cmd.ContractorType]; ok {

@@ -193,7 +193,7 @@ func (t *tlogBackend) vettedTreeIDFromToken(token []byte) (int64, bool) {
 	// contains a pointer to a vetted tree.
 	fr, err := t.unvetted.freezeRecord(treeID)
 	if err != nil {
-		if err == errFreezeRecordNotFound {
+		if errors.Is(err, errFreezeRecordNotFound) {
 			// Unvetted tree exists and is not frozen. This is an unvetted
 			// record.
 			return 0, false
@@ -769,7 +769,7 @@ func (t *tlogBackend) UpdateVettedRecord(token []byte, mdAppend, mdOverwrite []b
 	// Get existing record
 	r, err := t.vetted.recordLatest(treeID)
 	if err != nil {
-		if err == errRecordNotFound {
+		if errors.Is(err, errRecordNotFound) {
 			return nil, backend.ErrRecordNotFound
 		}
 		return nil, fmt.Errorf("recordLatest: %v", err)
@@ -959,7 +959,7 @@ func (t *tlogBackend) UpdateVettedMetadata(token []byte, mdAppend, mdOverwrite [
 	// Get existing record
 	r, err := t.vetted.recordLatest(treeID)
 	if err != nil {
-		if err == errRecordNotFound {
+		if errors.Is(err, errRecordNotFound) {
 			return backend.ErrRecordNotFound
 		}
 		return fmt.Errorf("recordLatest: %v", err)
@@ -1103,7 +1103,7 @@ func (t *tlogBackend) GetVetted(token []byte, version string) (*backend.Record, 
 
 	r, err := t.vetted.record(treeID, v)
 	if err != nil {
-		if err == errRecordNotFound {
+		if errors.Is(err, errRecordNotFound) {
 			err = backend.ErrRecordNotFound
 		}
 		return nil, err
@@ -1639,7 +1639,7 @@ func (t *tlogBackend) setup() error {
 		if vettedTreeID != 0 {
 			r, err = t.GetVetted(token, "")
 			if err != nil {
-				if err == backend.ErrRecordNotFound {
+				if errors.Is(err, backend.ErrRecordNotFound) {
 					// A tree that was created but no record was appended onto
 					// it for whatever reason. This can happen if there is a
 					// network failure or internal server error.
@@ -1650,7 +1650,7 @@ func (t *tlogBackend) setup() error {
 		} else {
 			r, err = t.GetUnvetted(token, "")
 			if err != nil {
-				if err == backend.ErrRecordNotFound {
+				if errors.Is(err, backend.ErrRecordNotFound) {
 					// A tree that was created but no record was appended onto
 					// it for whatever reason. This can happen if there is a
 					// network failure or internal server error.

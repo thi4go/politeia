@@ -480,7 +480,7 @@ func New(dcrdataURL string) (*Client, error) {
 	// caller can decide if reconnection attempts should be made.
 	var status StatusT
 	c, err := psclientNew(dcrdataURL)
-	if err == nil {
+	if errors.Is(err, nil) {
 		// Connection is good
 		status = StatusOpen
 	} else {

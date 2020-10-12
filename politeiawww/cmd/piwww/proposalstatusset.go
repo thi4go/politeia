@@ -6,6 +6,7 @@ package main
 
 import (
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -52,7 +53,7 @@ func (cmd *proposalStatusSetCmd) Execute(args []string) error {
 	// code or the human readable equivalent.
 	var status pi.PropStatusT
 	s, err := strconv.ParseUint(cmd.Args.Status, 10, 32)
-	if err == nil {
+	if errors.Is(err, nil) {
 		// Numeric status code found
 		status = pi.PropStatusT(s)
 	} else if s, ok := propStatus[cmd.Args.Status]; ok {

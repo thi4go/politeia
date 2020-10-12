@@ -1462,7 +1462,7 @@ func TestProcessVerifyResetPassword(t *testing.T) {
 			// If there were no errors, ensure that the user password
 			// was updated correctly, the user account was unlocked,
 			// and the verification token fields were cleared out.
-			if err == nil {
+			if errors.Is(err, nil) {
 				u, err := p.db.UserGetByUsername(v.vrp.Username)
 				if err != nil {
 					t.Fatal(err)

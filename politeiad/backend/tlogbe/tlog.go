@@ -439,7 +439,7 @@ func (t *tlog) treeExists(treeID int64) bool {
 	log.Tracef("%v treeExists: %v", t.id, treeID)
 
 	_, err := t.trillian.tree(treeID)
-	return err == nil
+	return errors.Is(err, nil)
 }
 
 // treeFreeze updates the status of a record and freezes the trillian tree as a
@@ -1101,7 +1101,7 @@ func (t *tlog) recordSave(treeID int64, rm backend.RecordMetadata, metadata []ba
 
 	// Get the existing record index
 	currIdx, err := t.recordIndexLatest(leavesAll)
-	if err == errRecordNotFound {
+	if errors.Is(err, errRecordNotFound) {
 		// No record versions exist yet. This is ok.
 		currIdx = &recordIndex{
 			Metadata: make(map[uint64][]byte),

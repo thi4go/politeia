@@ -70,7 +70,7 @@ func (p *politeiawww) processInviteNewUser(u cms.InviteNewUser) (*cms.InviteNewU
 
 	// Check if the user is already verified.
 	existingUser, err := p.userByEmail(u.Email)
-	if err == nil {
+	if errors.Is(err, nil) {
 		if existingUser.NewUserVerificationToken == nil {
 			return &cms.InviteNewUserReply{}, nil
 		}
