@@ -9,7 +9,6 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/http/cookiejar"
@@ -283,7 +282,7 @@ func (c *Client) Version() (*www.VersionReply, error) {
 	if r.StatusCode != http.StatusOK {
 		var ue www.UserError
 		err = json.Unmarshal(respBody, &ue)
-		if errors.Is(err, nil) {
+		if err == nil {
 			return nil, fmt.Errorf("%v, %v %v", r.StatusCode,
 				userWWWErrorStatus(ue.ErrorCode),
 				strings.Join(ue.ErrorContext, ", "))
@@ -373,7 +372,7 @@ func (c *Client) Login(l *www.Login) (*www.LoginReply, error) {
 	if r.StatusCode != http.StatusOK {
 		var ue www.UserError
 		err = json.Unmarshal(respBody, &ue)
-		if errors.Is(err, nil) {
+		if err == nil {
 			return nil, fmt.Errorf("%v, %v %v", r.StatusCode,
 				userWWWErrorStatus(ue.ErrorCode),
 				strings.Join(ue.ErrorContext, ", "))
@@ -439,7 +438,7 @@ func (c *Client) Logout() (*www.LogoutReply, error) {
 	if r.StatusCode != http.StatusOK {
 		var ue www.UserError
 		err = json.Unmarshal(respBody, &ue)
-		if errors.Is(err, nil) {
+		if err == nil {
 			return nil, fmt.Errorf("%v, %v %v", r.StatusCode,
 				userWWWErrorStatus(ue.ErrorCode),
 				strings.Join(ue.ErrorContext, ", "))

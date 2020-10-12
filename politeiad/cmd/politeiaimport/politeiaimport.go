@@ -6,7 +6,6 @@ package main
 
 import (
 	"bufio"
-	"errors"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -60,7 +59,7 @@ func _main() error {
 	// Get confirmation from the user that it's
 	// ok to delete the current data directory.
 	_, err = os.Stat(dataDir)
-	if errors.Is(err, nil) {
+	if err == nil {
 		r := bufio.NewReader(os.Stdin)
 
 		fmt.Printf("You are about to delete     : %v\n", dataDir)
@@ -170,7 +169,7 @@ func _main() error {
 			dirs := strings.Split(r, "/")
 			for _, v := range dirs {
 				_, err = util.ConvertStringToken(v)
-				if errors.Is(err, nil) {
+				if err == nil {
 					token = v
 				}
 			}

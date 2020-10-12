@@ -8,7 +8,6 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
-	"errors"
 	"io"
 	"io/ioutil"
 	"os"
@@ -161,7 +160,7 @@ func CleanAndExpandPath(path string) string {
 	} else {
 		u, err = user.Lookup(userName)
 	}
-	if errors.Is(err, nil) {
+	if err == nil {
 		homeDir = u.HomeDir
 	}
 	// Fallback to CWD if user lookup fails or user has no home directory.

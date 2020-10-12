@@ -5,7 +5,6 @@
 package shared
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -38,7 +37,7 @@ func (cmd *UserManageCmd) Execute(args []string) error {
 	// action code or the human readable equivalent.
 	var action v1.UserManageActionT
 	a, err := strconv.ParseUint(cmd.Args.Action, 10, 32)
-	if errors.Is(err, nil) {
+	if err == nil {
 		// Numeric action code found
 		action = v1.UserManageActionT(a)
 	} else if a, ok := ManageActions[cmd.Args.Action]; ok {

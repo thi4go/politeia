@@ -129,7 +129,7 @@ func (p *politeiawww) handleVersion(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, err := p.getSessionUser(w, r)
-	if errors.Is(err, nil) {
+	if err == nil {
 		versionReply.ActiveUserSession = true
 	}
 

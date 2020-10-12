@@ -79,7 +79,7 @@ func tokenIsValid(token string) bool {
 
 	// Verify token is valid hex
 	_, err := hex.DecodeString(token)
-	return errors.Is(err, nil)
+	return err == nil
 }
 
 // tokenIsFullLength returns whether the provided string a is valid, full

@@ -316,7 +316,7 @@ func loadConfig() (*config, []string, error) {
 		// it's not mounted).
 		var e *os.PathError
 		if errors.As(err, &e) && os.IsExist(err) {
-			if link, lerr := os.Readlink(e.Path); errors.Is(lerr, nil) {
+			if link, lerr := os.Readlink(e.Path); lerr == nil {
 				str := "is symlink %s -> %s mounted?"
 				err = fmt.Errorf(str, e.Path, link)
 			}
@@ -336,7 +336,7 @@ func loadConfig() (*config, []string, error) {
 		// it's not mounted).
 		var e *os.PathError
 		if errors.As(err, &e) && os.IsExist(err) {
-			if link, lerr := os.Readlink(e.Path); errors.Is(lerr, nil) {
+			if link, lerr := os.Readlink(e.Path); lerr == nil {
 				str := "is symlink %s -> %s mounted?"
 				err = fmt.Errorf(str, e.Path, link)
 			}

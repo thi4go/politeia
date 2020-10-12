@@ -1562,7 +1562,7 @@ func (g *gitBackEnd) _updateRecord(commit bool, id string, mdAppend, mdOverwrite
 	avFilename := fmt.Sprintf("%02v%v", decredplugin.MDStreamAuthorizeVote,
 		defaultMDFilenameSuffix)
 	_, err = os.Stat(pijoin(joinLatest(g.unvetted, id), avFilename))
-	if errors.Is(err, nil) {
+	if err == nil {
 		err = g.gitRm(g.unvetted, pijoin(id, version, avFilename), true)
 		if err != nil {
 			return err
@@ -1748,7 +1748,7 @@ func (g *gitBackEnd) updateRecord(token []byte, mdAppend []backend.MetadataStrea
 
 	// Check to make sure this prop is not vetted
 	_, err = os.Stat(pijoin(g.unvetted, id))
-	if errors.Is(err, nil) {
+	if err == nil {
 		return nil, backend.ErrRecordFound
 	}
 
@@ -2349,7 +2349,7 @@ func (g *gitBackEnd) UnvettedExists(token []byte) bool {
 func (g *gitBackEnd) VettedExists(token []byte) bool {
 	log.Tracef("VettedExists %x", token)
 	_, err := os.Stat(pijoin(g.vetted, hex.EncodeToString(token)))
-	return errors.Is(err, nil)
+	return err == nil
 }
 
 // UnvettedTokens returns the censorship record token of all unvetted records
@@ -2415,7 +2415,7 @@ func (g *gitBackEnd) vettedMetadataStreamExists(token []byte, mdstreamID int) bo
 	fn := fmt.Sprintf("%02v%v", mdstreamID, defaultMDFilenameSuffix)
 	dir := joinLatest(g.vetted, hex.EncodeToString(token))
 	_, err := os.Stat(pijoin(dir, fn))
-	return errors.Is(err, nil)
+	return err == nil
 }
 
 // GetUnvetted checks out branch token and returns the content of

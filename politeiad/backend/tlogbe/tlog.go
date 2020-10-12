@@ -439,7 +439,7 @@ func (t *tlog) treeExists(treeID int64) bool {
 	log.Tracef("%v treeExists: %v", t.id, treeID)
 
 	_, err := t.trillian.tree(treeID)
-	return errors.Is(err, nil)
+	return err == nil
 }
 
 // treeFreeze updates the status of a record and freezes the trillian tree as a

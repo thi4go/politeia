@@ -282,7 +282,7 @@ func TestJournalCopy(t *testing.T) {
 	// Copy journal fail
 	destination := filepath.Join(dir, "") // Try to overwrite dir
 	err = j.Copy(filename, destination)
-	if errors.Is(err, nil) {
+	if err == nil {
 		t.Fatalf("Expected error")
 	}
 

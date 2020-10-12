@@ -5,7 +5,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -37,7 +36,7 @@ func (cmd *userEditCmd) Execute(args []string) error {
 
 	var notif v1.EmailNotificationT
 	a, err := strconv.ParseUint(cmd.Args.NotifType, 10, 64)
-	if errors.Is(err, nil) {
+	if err == nil {
 		// Numeric action code found
 		notif = v1.EmailNotificationT(a)
 	} else if a, ok := emailNotifs[cmd.Args.NotifType]; ok {

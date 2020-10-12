@@ -8,7 +8,6 @@ import (
 	"bufio"
 	"bytes"
 	"compress/zlib"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -75,7 +74,7 @@ func TestLog(t *testing.T) {
 	}
 
 	_, err = g.gitLog(g.root)
-	if errors.Is(err, nil) {
+	if err == nil {
 		t.Fatal("empty repo should fail log")
 	}
 }
@@ -131,7 +130,7 @@ func TestFsck(t *testing.T) {
 
 	// Expect fsck to fail
 	_, err = g.gitFsck(g.root)
-	if errors.Is(err, nil) {
+	if err == nil {
 		t.Fatalf("expected fsck error")
 	}
 
@@ -239,7 +238,7 @@ func TestFsck(t *testing.T) {
 
 	// Expect fsck to fail
 	_, err = g.gitFsck(g.root)
-	if errors.Is(err, nil) {
+	if err == nil {
 		t.Fatalf("expected fsck error")
 	}
 
@@ -265,7 +264,7 @@ func TestFsck(t *testing.T) {
 
 	// Expect fsck to fail
 	_, err = g.gitFsck(g.root)
-	if errors.Is(err, nil) {
+	if err == nil {
 		t.Fatalf("expected fsck error")
 	}
 

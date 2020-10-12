@@ -594,7 +594,7 @@ func createFlushFile(filename string) error {
 func (g *gitBackEnd) flushJournalsUnwind(id string) error {
 	// git stash, can fail if there are no uncommitted failures
 	err := g.gitStash(g.unvetted)
-	if errors.Is(err, nil) {
+	if err == nil {
 		// git stash drop, allowed to fail
 		_ = g.gitStashDrop(g.unvetted)
 	}

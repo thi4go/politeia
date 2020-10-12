@@ -6,7 +6,6 @@ package main
 
 import (
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -37,7 +36,7 @@ func (cmd *SetDCCStatusCmd) Execute(args []string) error {
 	// code or the human readable equivalent.
 	var status cms.DCCStatusT
 	s, err := strconv.ParseUint(cmd.Args.Status, 10, 32)
-	if errors.Is(err, nil) {
+	if err == nil {
 		// Numeric status code found
 		status = cms.DCCStatusT(s)
 	} else if s, ok := DCCStatus[strings.ToLower(cmd.Args.Status)]; ok {
