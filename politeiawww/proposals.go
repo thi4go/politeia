@@ -710,9 +710,10 @@ func (p *politeiawww) processStartVoteRunoffV2(sv www2.StartVoteRunoff, u *user.
 		if err != nil {
 			// Attach the token to the error so the user knows which one
 			// failed.
-			if ue, ok := err.(*www.UserError); ok {
-				ue.ErrorContext = append(ue.ErrorContext, token)
-				err = ue
+			var uerr *www.UserError
+			if errors.As(err, &uerr) {
+				uerr.ErrorContext = append(uerr.ErrorContext, token)
+				err = uerr
 			}
 			return nil, err
 		}
@@ -723,9 +724,10 @@ func (p *politeiawww) processStartVoteRunoffV2(sv www2.StartVoteRunoff, u *user.
 		if err != nil {
 			// Attach the token to the error so the user knows which one
 			// failed.
-			if ue, ok := err.(*www.UserError); ok {
-				ue.ErrorContext = append(ue.ErrorContext, token)
-				err = ue
+			var uerr *www.UserError
+			if errors.As(err, &uerr) {
+				uerr.ErrorContext = append(uerr.ErrorContext, token)
+				err = uerr
 			}
 			return nil, err
 		}

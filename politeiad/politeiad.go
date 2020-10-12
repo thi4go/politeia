@@ -945,11 +945,12 @@ func (p *politeia) updateUnvettedMetadata(w http.ResponseWriter, r *http.Request
 			return
 		}
 		// Check for content error.
-		if contentErr, ok := err.(backend.ContentVerificationError); ok {
+		var cverr backend.ContentVerificationError
+		if errors.As(err, &cverr) {
 			log.Infof("%v update unvetted metadata content error: %v",
-				remoteAddr(r), contentErr)
-			p.respondWithUserError(w, contentErr.ErrorCode,
-				contentErr.ErrorContext)
+				remoteAddr(r), cverr)
+			p.respondWithUserError(w, cverr.ErrorCode,
+				cverr.ErrorContext)
 			return
 		}
 		// Check for plugin error
