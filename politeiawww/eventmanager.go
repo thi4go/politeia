@@ -342,16 +342,16 @@ func (p *politeiawww) handleEventProposalStatusChange(ch chan interface{}) {
 	}
 }
 
-func (p *politeiawww) notifyProposalAuthorOnComment(d dataProposalComment, pr pi.ProposalRecord) error {
+func (p *politeiawww) notifyProposalAuthorOnComment(d dataProposalComment, userID, proposalName string) error {
 	// Lookup proposal author to see if they should be sent a
 	// notification.
-	userID, err := uuid.Parse(pr.UserID)
+	uuid, err := uuid.Parse(userID)
 	if err != nil {
 		return err
 	}
-	author, err := p.db.UserGetById(userID)
+	author, err := p.db.UserGetById(uuid)
 	if err != nil {
-		return fmt.Errorf("UserGetByID %v: %v", userID.String(), err)
+		return fmt.Errorf("UserGetByID %v: %v", uuid.String(), err)
 	}
 
 	// Check if notification should be sent to author
@@ -368,10 +368,10 @@ func (p *politeiawww) notifyProposalAuthorOnComment(d dataProposalComment, pr pi
 	// Send notification eamil
 	commentID := strconv.FormatUint(uint64(d.commentID), 10)
 	return p.emailProposalCommentSubmitted(d.token, commentID, d.username,
-		proposalName(pr), author.Email)
+		proposalName, author.Email)
 }
 
-func (p *politeiawww) notifyParentAuthorOnComment(d dataProposalComment, pr pi.ProposalRecord) error {
+func (p *politeiawww) notifyParentAuthorOnComment(d dataProposalComment, proposalName string) error {
 	// Verify this is a reply comment
 	if d.parentID == 0 {
 		return nil
@@ -410,15 +410,15 @@ func (p *politeiawww) notifyParentAuthorOnComment(d dataProposalComment, pr pi.P
 	// Send notification email to parent comment author
 	commentID := strconv.FormatUint(uint64(d.commentID), 10)
 	return p.emailProposalCommentReply(d.token, commentID, d.username,
-		proposalName(pr), author.Email)
+		proposalName, author.Email)
 }
 
 type dataProposalComment struct {
-	state     pi.PropStateT // Proposal state
-	token     string        // Proposal token
-	commentID uint32        // Comment ID
-	parentID  uint32        // Parent comment ID
-	username  string        // Comment author username
+	state     pi.PropStateT
+	token     string // Proposal token
+	username  string // Comment author username
+	commentID uint32
+	parentID  uint32
 }
 
 func (p *politeiawww) handleEventProposalComment(ch chan interface{}) {
@@ -439,14 +439,14 @@ func (p *politeiawww) handleEventProposalComment(ch chan interface{}) {
 		}
 
 		// Notify the proposal author
-		err = p.notifyProposalAuthorOnComment(d, *pr)
+		err = p.notifyProposalAuthorOnComment(d, pr.UserID, proposalName(*pr))
 		if err != nil {
 			err = fmt.Errorf("notifyProposalAuthorOnComment: %v", err)
 			goto next
 		}
 
 		// Notify the parent comment author
-		err = p.notifyParentAuthorOnComment(d, *pr)
+		err = p.notifyParentAuthorOnComment(d, proposalName(*pr))
 		if err != nil {
 			err = fmt.Errorf("notifyParentAuthorOnComment: %v", err)
 			goto next
