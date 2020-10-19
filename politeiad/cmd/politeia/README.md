@@ -31,8 +31,9 @@ Identity saved to: /home/user/.politeia/identity.json
 
 ## Verify a record
 
-Verifies the censorship signature of a record. It receives the server's public
-key, the record token, the record merkle root and the signature.
+Verifies the censorship signature of a record to make sure it was received by
+the server. It receives as input the server's public key, the record token, 
+the record merkle root and the signature.
 
 ```
 $ politeia -v -testnet -rpchost 127.0.0.1 -rpcuser=user -rpcpass=pass verify \
