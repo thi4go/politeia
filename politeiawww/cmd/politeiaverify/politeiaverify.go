@@ -19,7 +19,7 @@ type record struct {
 	ServerPublicKey  string           `josn:"serverpublickey"`
 	PublicKey        string           `json:"publickey"`
 	Signature        string           `json:"signature"`
-	CensorshipRecord censorshipRecord `json:"censorshiprecord`
+	CensorshipRecord censorshipRecord `json:"censorshiprecord"`
 	Files            []files          `json:"files"`
 	Metadata         []metadata       `json:"metadata"`
 }
@@ -136,6 +136,9 @@ func _main() error {
 		return err
 	}
 	sig, err := util.ConvertSignature(record.Signature)
+	if err != nil {
+		return err
+	}
 	if !id.VerifyMessage([]byte(merkle), sig) {
 		return fmt.Errorf("Invalid record signature %v", record.Signature)
 	}
