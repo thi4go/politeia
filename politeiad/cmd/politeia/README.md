@@ -1,16 +1,17 @@
 # politeia refclient examples
 
 Available commands:  
-`identity`  
-`new`  
-`updateunvetted`  
-`updateunvettedmd`  
-`setunvettedstatus`  
-`getunvetted`  
-`updatevetted`  
-`updatevettedmd`  
-`getvetted`  
-`plugin`  
+`identity`
+`verify`
+`new`
+`updateunvetted`
+`updateunvettedmd`
+`setunvettedstatus`
+`getunvetted`
+`updatevetted`
+`updatevettedmd`
+`getvetted`
+`plugin`
 `plugininventory`
 `inventory`
 
@@ -26,6 +27,21 @@ Fingerprint: j2J+naFDImJtfoHXiff8r9JfYiNalTd/OcvHKTxJRK0=
 
 Save to /home/user/.politeia/identity.json or ctrl-c to abort
 Identity saved to: /home/user/.politeia/identity.json
+```
+
+## Verify a record
+
+Verifies the censorship signature of a record. It receives the server's public
+key, the record token, the record merkle root and the signature.
+
+```
+$ politeia -v -testnet -rpchost 127.0.0.1 -rpcuser=user -rpcpass=pass verify \
+  df0f5cff8d9a3c6d55429c7e9e66b13ec175768b24f20db1b91188f00f7ea4b7 \
+  c800ff5195ddb2360000 \
+  36a2e53b25183dcfd192224fdff1074472ad7fdf5989abf9dfb8e7972caceae1 \
+  f9495f8100fc3d2d2bcd3d57705adc1f859d29f5a0ed1d999593a57de5af8c047615efb65e08e93935d071b94ee3883f15661defbfa83b503e6e84be4c18aa0b
+
+  Record successfully verified
 ```
 
 ## Add a new record

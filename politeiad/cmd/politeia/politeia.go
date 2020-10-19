@@ -66,6 +66,8 @@ func usage() {
 	fmt.Fprintf(os.Stderr, "\n actions:\n")
 	fmt.Fprintf(os.Stderr, "  identity          - Retrieve server "+
 		"identity\n")
+	fmt.Fprintf(os.Stderr, "  verify            - Verify a record "+
+		"<pubkey> <token> <merkle> <signature>\n")
 	fmt.Fprintf(os.Stderr, "  plugins           - Retrieve plugin "+
 		"inventory\n")
 	fmt.Fprintf(os.Stderr, "  inventory         - Inventory records by "+
@@ -166,6 +168,28 @@ func getIdentity() error {
 		return err
 	}
 	fmt.Printf("Identity saved to: %v\n", rf)
+
+	return nil
+}
+
+func verifyRecord() error {
+	flags := flag.Args()[1:] // Chop off action.
+
+	id, err := util.IdentityFromString(flags[0])
+	if err != nil {
+		return err
+	}
+	signature, err := util.ConvertSignature(flags[3])
+	if err != nil {
+		return err
+	}
+
+	// Verify merkle+token msg agains't signature
+	if !id.VerifyMessage([]byte(flags[2]+flags[1]), signature) {
+		return fmt.Errorf("invalid censorship record signature")
+	}
+
+	fmt.Printf("Record successfully verified")
 
 	return nil
 }
@@ -1528,6 +1552,8 @@ func _main() error {
 			switch a {
 			case "identity":
 				return getIdentity()
+			case "verify":
+				return verifyRecord()
 			case "new":
 				return newRecord()
 			case "updateunvetted":

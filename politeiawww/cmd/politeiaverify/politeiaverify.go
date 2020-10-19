@@ -43,9 +43,9 @@ type metadata struct {
 	Payload string `json:"payload"`
 }
 
-func help() {
-	fmt.Fprintf(os.Stderr, "usage: politeiaverify [options]\n")
-	fmt.Fprintf(os.Stderr, "  <json bundle> - Path to the JSON bundle "+
+func usage() {
+	fmt.Fprintf(os.Stderr, "usage: politeiaverify <bundle>\n")
+	fmt.Fprintf(os.Stderr, "  <bundle> - Path to the JSON bundle "+
 		"downloaded from the GUI\n")
 	fmt.Fprintf(os.Stderr, "\n")
 }
@@ -105,7 +105,8 @@ func _main() error {
 	args := flag.Args()
 
 	if len(args) != 1 {
-		return fmt.Errorf("must provide json bundle as input to the command")
+		usage()
+		return fmt.Errorf("Must provide json bundle as input to the command")
 	}
 
 	var payload []byte
@@ -127,7 +128,7 @@ func _main() error {
 		return err
 	}
 	if m != merkle {
-		return fmt.Errorf("merkle roots do not match: %v and %v", m, merkle)
+		return fmt.Errorf("Merkle roots do not match: %v and %v", m, merkle)
 	}
 
 	// Verify record signature
@@ -137,7 +138,7 @@ func _main() error {
 	}
 	sig, err := util.ConvertSignature(record.Signature)
 	if !id.VerifyMessage([]byte(merkle), sig) {
-		return fmt.Errorf("invalid record signature %v", record.Signature)
+		return fmt.Errorf("Invalid record signature %v", record.Signature)
 	}
 
 	// Verify censorship record signature
@@ -150,11 +151,11 @@ func _main() error {
 		return err
 	}
 	if !id.VerifyMessage([]byte(merkle+record.CensorshipRecord.Token), sig) {
-		return fmt.Errorf("invalid censhorship record signature %v",
+		return fmt.Errorf("Invalid censhorship record signature %v",
 			record.CensorshipRecord.Signature)
 	}
 
-	fmt.Println("Record verified successfully")
+	fmt.Println("Record successfully verified")
 
 	return nil
 }
