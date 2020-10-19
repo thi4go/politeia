@@ -32,7 +32,6 @@ type censorshipRecord struct {
 
 type files struct {
 	Name    string `json:"name"`
-	MIME    string `json:"mime"`
 	Digest  string `json:"digest"`
 	Payload string `json:"payload"`
 }
