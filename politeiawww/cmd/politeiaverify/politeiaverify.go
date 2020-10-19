@@ -1,7 +1,7 @@
 package main
 
 import (
-	"crypto/ed25519"
+	"bytes"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
@@ -16,7 +16,9 @@ import (
 )
 
 type record struct {
+	ServerPublicKey  string           `josn:"serverpublickey"`
 	PublicKey        string           `json:"publickey"`
+	Signature        string           `json:"signature"`
 	CensorshipRecord censorshipRecord `json:"censorshiprecord`
 	Files            []files          `json:"files"`
 	Metadata         []metadata       `json:"metadata"`
@@ -48,6 +50,8 @@ func help() {
 	fmt.Fprintf(os.Stderr, "\n")
 }
 
+// merkleRoot calculates the merkle root of a record. It also compares the
+// received digest from the input, and digests calculated from their payload.
 func merkleRoot(fs []files, mds []metadata) (string, error) {
 	digests := make([]*[sha256.Size]byte, 0, len(fs))
 
@@ -61,6 +65,15 @@ func merkleRoot(fs []files, mds []metadata) (string, error) {
 		var sha [sha256.Size]byte
 		copy(sha[:], d)
 		digests = append(digests, &sha)
+
+		// Verify digest
+		cd, ok := util.ConvertDigest(f.Digest)
+		if !ok {
+			return "", fmt.Errorf("invalid digest %v", f.Digest)
+		}
+		if !bytes.Equal(d, cd[:]) {
+			return "", fmt.Errorf("file: %v digests do not match", f.Name)
+		}
 	}
 
 	// Metadata digests
@@ -74,6 +87,14 @@ func merkleRoot(fs []files, mds []metadata) (string, error) {
 		copy(sha[:], d)
 		digests = append(digests, &sha)
 
+		// Verify digest
+		cd, ok := util.ConvertDigest(md.Digest)
+		if !ok {
+			return "", fmt.Errorf("invalid digest %v", md.Digest)
+		}
+		if !bytes.Equal(d, cd[:]) {
+			return "", fmt.Errorf("metadata: %v digests do not match", md.Hint)
+		}
 	}
 
 	return hex.EncodeToString(merkle.Root(digests)[:]), nil
@@ -82,8 +103,6 @@ func merkleRoot(fs []files, mds []metadata) (string, error) {
 func _main() error {
 	flag.Parse()
 	args := flag.Args()
-
-	fmt.Println(args)
 
 	if len(args) != 1 {
 		return fmt.Errorf("must provide json bundle as input to the command")
@@ -101,38 +120,38 @@ func _main() error {
 		return err
 	}
 
-	// Compare merkle roots
+	// Verify merkle root
 	merkle := record.CensorshipRecord.Merkle
 	m, err := merkleRoot(record.Files, record.Metadata)
 	if err != nil {
 		return err
 	}
 	if m != merkle {
-		return fmt.Errorf("error calculating merkel %v %v", m, merkle)
+		return fmt.Errorf("merkle roots do not match: %v and %v", m, merkle)
 	}
 
-	// Decode public key
-	key, err := hex.DecodeString(record.PublicKey)
+	// Verify record signature
+	id, err := util.IdentityFromString(record.PublicKey)
 	if err != nil {
 		return err
 	}
-	var publicKey [ed25519.PublicKeySize]byte
-	copy(publicKey[:], key)
+	sig, err := util.ConvertSignature(record.Signature)
+	if !id.VerifyMessage([]byte(merkle), sig) {
+		return fmt.Errorf("invalid record signature %v", record.Signature)
+	}
 
-	// Decode signature
-	sig, err := hex.DecodeString(record.CensorshipRecord.Signature)
+	// Verify censorship record signature
+	id, err = util.IdentityFromString(record.ServerPublicKey)
 	if err != nil {
 		return err
 	}
-	var signature [ed25519.SignatureSize]byte
-	copy(signature[:], sig)
-
-	// Verify record
-	token := record.CensorshipRecord.Token
-	verified := ed25519.Verify(publicKey[:], []byte(merkle+token), signature[:])
-
-	if !verified {
-		return fmt.Errorf("Record verification failed")
+	sig, err = util.ConvertSignature(record.CensorshipRecord.Signature)
+	if err != nil {
+		return err
+	}
+	if !id.VerifyMessage([]byte(merkle+record.CensorshipRecord.Token), sig) {
+		return fmt.Errorf("invalid censhorship record signature %v",
+			record.CensorshipRecord.Signature)
 	}
 
 	fmt.Println("Record verified successfully")
