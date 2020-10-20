@@ -119,7 +119,7 @@ var (
 // errAnchorNotFound is returned if no anchor is found for the provided tree.
 func (t *tlog) anchorLatest(treeID int64) (*anchor, error) {
 	// Get tree leaves
-	leavesAll, err := t.trillian.leavesAll(treeID)
+	leavesAll, err := t.trillian.LeavesAll(treeID)
 	if err != nil {
 		return nil, fmt.Errorf("leavesAll: %v", err)
 	}
@@ -338,7 +338,7 @@ func (t *tlog) anchor() {
 		case errors.Is(err, errAnchorNotFound):
 			// Tree has not been anchored yet. Verify that the tree has
 			// leaves. A tree with no leaves does not need to be anchored.
-			leavesAll, err := t.trillian.leavesAll(v.TreeId)
+			leavesAll, err := t.trillian.LeavesAll(v.TreeId)
 			if err != nil {
 				exitErr = fmt.Errorf("leavesAll: %v", err)
 				return

@@ -86,7 +86,7 @@ type tlog struct {
 	id            string
 	dcrtimeHost   string
 	encryptionKey *encryptionKey
-	trillian      *trillianClient
+	trillian      *TrillianClient
 	store         store.Blob
 	cron          *cron.Cron
 
@@ -382,7 +382,7 @@ func (t *tlog) treeNew() (int64, error) {
 func (t *tlog) treeExists(treeID int64) bool {
 	log.Tracef("%v treeExists: %v", t.id, treeID)
 
-	_, err := t.trillian.tree(treeID)
+	_, err := t.trillian.Tree(treeID)
 	return err == nil
 }
 
@@ -472,7 +472,7 @@ func (t *tlog) treePointer(treeID int64) (int64, bool) {
 
 	// Verify record index exists
 	var idx *recordIndex
-	leavesAll, err := t.trillian.leavesAll(treeID)
+	leavesAll, err := t.trillian.LeavesAll(treeID)
 	if err != nil {
 		err = fmt.Errorf("leavesAll: %v", err)
 		goto printErr
@@ -993,7 +993,7 @@ func (t *tlog) recordSave(treeID int64, rm backend.RecordMetadata, metadata []ba
 	}
 
 	// Get tree leaves
-	leavesAll, err := t.trillian.leavesAll(treeID)
+	leavesAll, err := t.trillian.LeavesAll(treeID)
 	if err != nil {
 		return fmt.Errorf("leavesAll %v: %v", treeID, err)
 	}
@@ -1115,7 +1115,7 @@ func (t *tlog) metadataSave(treeID int64, rm backend.RecordMetadata, metadata []
 	}
 
 	// Get tree leaves
-	leavesAll, err := t.trillian.leavesAll(treeID)
+	leavesAll, err := t.trillian.LeavesAll(treeID)
 	if err != nil {
 		return nil, fmt.Errorf("leavesAll: %v", err)
 	}
@@ -1216,7 +1216,7 @@ func (t *tlog) recordDel(treeID int64) error {
 	}
 
 	// Get all tree leaves
-	leavesAll, err := t.trillian.leavesAll(treeID)
+	leavesAll, err := t.trillian.LeavesAll(treeID)
 	if err != nil {
 		return err
 	}
@@ -1293,7 +1293,7 @@ func (t *tlog) recordExists(treeID int64) bool {
 
 	// Verify record index exists
 	var idx *recordIndex
-	leavesAll, err := t.trillian.leavesAll(treeID)
+	leavesAll, err := t.trillian.LeavesAll(treeID)
 	if err != nil {
 		err = fmt.Errorf("leavesAll: %v", err)
 		goto printErr
@@ -1331,7 +1331,7 @@ func (t *tlog) record(treeID int64, version uint32) (*backend.Record, error) {
 	}
 
 	// Get tree leaves
-	leaves, err := t.trillian.leavesAll(treeID)
+	leaves, err := t.trillian.LeavesAll(treeID)
 	if err != nil {
 		return nil, fmt.Errorf("leavesAll %v: %v", treeID, err)
 	}
@@ -1529,7 +1529,7 @@ func (t *tlog) blobsSave(treeID int64, keyPrefix string, blobs, hashes [][]byte,
 	}
 
 	// Verify tree is not frozen
-	leavesAll, err := t.trillian.leavesAll(treeID)
+	leavesAll, err := t.trillian.LeavesAll(treeID)
 	if err != nil {
 		return nil, fmt.Errorf("leavesAll: %v", err)
 	}
@@ -1613,7 +1613,7 @@ func (t *tlog) blobsDel(treeID int64, merkles [][]byte) error {
 	}
 
 	// Get all tree leaves
-	leaves, err := t.trillian.leavesAll(treeID)
+	leaves, err := t.trillian.LeavesAll(treeID)
 	if err != nil {
 		return err
 	}
@@ -1665,7 +1665,7 @@ func (t *tlog) blobsByMerkle(treeID int64, merkles [][]byte) (map[string][]byte,
 	}
 
 	// Get leaves
-	leavesAll, err := t.trillian.leavesAll(treeID)
+	leavesAll, err := t.trillian.LeavesAll(treeID)
 	if err != nil {
 		return nil, fmt.Errorf("leavesAll: %v", err)
 	}
@@ -1754,7 +1754,7 @@ func (t *tlog) blobsByKeyPrefix(treeID int64, keyPrefix string) ([][]byte, error
 	}
 
 	// Get leaves
-	leaves, err := t.trillian.leavesAll(treeID)
+	leaves, err := t.trillian.LeavesAll(treeID)
 	if err != nil {
 		return nil, fmt.Errorf("leavesAll: %v", err)
 	}
@@ -1870,7 +1870,7 @@ func newTlog(id, homeDir, dataDir, trillianHost, trillianKeyFile, dcrtimeHost, e
 	log.Infof("Trillian key %v: %v", id, trillianKeyFile)
 	log.Infof("Trillian host %v: %v", id, trillianHost)
 
-	tclient, err := newTrillianClient(trillianHost, trillianKeyFile)
+	tclient, err := NewTrillianClient(trillianHost, trillianKeyFile)
 	if err != nil {
 		return nil, err
 	}
