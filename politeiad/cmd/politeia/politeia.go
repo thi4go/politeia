@@ -66,14 +66,14 @@ func usage() {
 	fmt.Fprintf(os.Stderr, "\n actions:\n")
 	fmt.Fprintf(os.Stderr, "  identity          - Retrieve server "+
 		"identity\n")
-	fmt.Fprintf(os.Stderr, "  verify            - Verify a record "+
-		"<pubkey> <token> <merkle> <signature>\n")
 	fmt.Fprintf(os.Stderr, "  plugins           - Retrieve plugin "+
 		"inventory\n")
 	fmt.Fprintf(os.Stderr, "  inventory         - Inventory records by "+
 		"status\n")
 	fmt.Fprintf(os.Stderr, "  new               - Create new record "+
 		"[metadata<id>]... <filename>...\n")
+	fmt.Fprintf(os.Stderr, "  verify            - Verify a record "+
+		"<pubkey> <token> <merkle> <signature>\n")
 	fmt.Fprintf(os.Stderr, "  getunvetted       - Retrieve record "+
 		"<id>\n")
 	fmt.Fprintf(os.Stderr, "  setunvettedstatus - Set unvetted record "+
@@ -168,28 +168,6 @@ func getIdentity() error {
 		return err
 	}
 	fmt.Printf("Identity saved to: %v\n", rf)
-
-	return nil
-}
-
-func verifyRecord() error {
-	flags := flag.Args()[1:] // Chop off action.
-
-	id, err := util.IdentityFromString(flags[0])
-	if err != nil {
-		return err
-	}
-	signature, err := util.ConvertSignature(flags[3])
-	if err != nil {
-		return err
-	}
-
-	// Verify merkle+token msg agains't signature
-	if !id.VerifyMessage([]byte(flags[2]+flags[1]), signature) {
-		return fmt.Errorf("invalid censorship record signature")
-	}
-
-	fmt.Printf("Record successfully verified")
 
 	return nil
 }
@@ -617,8 +595,35 @@ func newRecord() error {
 	}
 
 	if !*printJson {
+		fmt.Printf("  Server public key: %v\n", id.String())
 		printCensorshipRecord(reply.CensorshipRecord)
 	}
+
+	return nil
+}
+
+func verifyRecord() error {
+	flags := flag.Args()[1:] // Chop off action.
+
+	if len(flags) < 4 {
+		return fmt.Errorf("Must pass all input parameters")
+	}
+
+	id, err := util.IdentityFromString(flags[0])
+	if err != nil {
+		return err
+	}
+	signature, err := util.ConvertSignature(flags[3])
+	if err != nil {
+		return err
+	}
+
+	// Verify merkle+token msg agains't signature
+	if !id.VerifyMessage([]byte(flags[2]+flags[1]), signature) {
+		return fmt.Errorf("Invalid censorship record signature")
+	}
+
+	fmt.Printf("Record successfully verified")
 
 	return nil
 }

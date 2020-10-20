@@ -1,163 +1,159 @@
 package main
 
 import (
-	"bytes"
-	"crypto/sha256"
-	"encoding/base64"
-	"encoding/hex"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
 
-	"github.com/decred/dcrtime/merkle"
+	pi "github.com/decred/politeia/politeiawww/api/pi/v1"
+	wwwutil "github.com/decred/politeia/politeiawww/util"
 	"github.com/decred/politeia/util"
 )
 
-type record struct {
-	ServerPublicKey  string           `josn:"serverpublickey"`
-	PublicKey        string           `json:"publickey"`
-	Signature        string           `json:"signature"`
-	CensorshipRecord censorshipRecord `json:"censorshiprecord"`
-	Files            []files          `json:"files"`
-	Metadata         []metadata       `json:"metadata"`
+type proposal struct {
+	PublicKey        string              `json:"publickey"`
+	Signature        string              `json:"signature"`
+	CensorshipRecord pi.CensorshipRecord `json:"censorshiprecord"`
+	Files            []pi.File           `json:"files"`
+	Metadata         []pi.Metadata       `json:"metadata"`
+	ServerPublicKey  string              `json:"serverpublickey"`
 }
 
-type censorshipRecord struct {
-	Token     string `json:"token"`
-	Merkle    string `json:"merkle"`
-	Signature string `json:"signature"`
+type comments []struct {
+	CommentID       string `json:"commentid"`
+	Receipt         string `json:"receipt"`
+	Signature       string `json:"signature"`
+	ServerPublicKey string `json:"serverpublickey"`
 }
 
-type files struct {
-	Name    string `json:"name"`
-	Digest  string `json:"digest"`
-	Payload string `json:"payload"`
-}
-
-type metadata struct {
-	Hint    string `json:"hint"`
-	Digest  string `json:"digest"`
-	Payload string `json:"payload"`
-}
+var (
+	flagVerifyProposal = flag.Bool("proposal", false, "Verify proposal bundle")
+	flagVerifyComments = flag.Bool("comments", false, "Verify comments bundle")
+)
 
 func usage() {
-	fmt.Fprintf(os.Stderr, "usage: politeiaverify <bundle>\n")
-	fmt.Fprintf(os.Stderr, "  <bundle> - Path to the JSON bundle "+
+	fmt.Fprintf(os.Stderr, "usage: politeiaverify [flags] <bundle>\n")
+	fmt.Fprintf(os.Stderr, " flags:\n")
+	flag.PrintDefaults()
+	fmt.Fprintf(os.Stderr, " <bundle> - Path to the JSON bundle "+
 		"downloaded from the GUI\n")
 	fmt.Fprintf(os.Stderr, "\n")
 }
 
-// merkleRoot calculates the merkle root of a record. It also compares the
-// received digest from the input, and digests calculated from their payload.
-func merkleRoot(fs []files, mds []metadata) (string, error) {
-	digests := make([]*[sha256.Size]byte, 0, len(fs))
+func verifyProposal(payload []byte) error {
+	var prop proposal
+	err := json.Unmarshal(payload, &prop)
+	if err != nil {
+		return err
+	}
 
-	// Files digests
-	for _, f := range fs {
-		b, err := base64.StdEncoding.DecodeString(f.Payload)
+	// Verify merkle root
+	merkle, err := wwwutil.MerkleRoot(prop.Files, prop.Metadata)
+	if err != nil {
+		return err
+	}
+	if merkle != prop.CensorshipRecord.Merkle {
+		return fmt.Errorf("Merkle roots do not match: %v and %v",
+			prop.CensorshipRecord.Merkle, merkle)
+	}
+
+	// Verify proposal signature
+	id, err := util.IdentityFromString(prop.PublicKey)
+	if err != nil {
+		return err
+	}
+	sig, err := util.ConvertSignature(prop.Signature)
+	if err != nil {
+		return err
+	}
+	if !id.VerifyMessage([]byte(merkle), sig) {
+		return fmt.Errorf("Invalid proposal signature %v", prop.Signature)
+	}
+
+	// Verify censorship record signature
+	id, err = util.IdentityFromString(prop.ServerPublicKey)
+	if err != nil {
+		return err
+	}
+	sig, err = util.ConvertSignature(prop.CensorshipRecord.Signature)
+	if err != nil {
+		return err
+	}
+	if !id.VerifyMessage([]byte(merkle+prop.CensorshipRecord.Token), sig) {
+		return fmt.Errorf("Invalid censhorship record signature %v",
+			prop.CensorshipRecord.Signature)
+	}
+
+	fmt.Println("Proposal successfully verified")
+
+	return nil
+}
+
+func verifyComments(payload []byte) error {
+	var comments comments
+	err := json.Unmarshal(payload, &comments)
+	if err != nil {
+		return err
+	}
+
+	for _, c := range comments {
+		// Verify receipt
+		id, err := util.IdentityFromString(c.ServerPublicKey)
 		if err != nil {
-			return "", err
+			return err
 		}
-		d := util.Digest(b)
-		var sha [sha256.Size]byte
-		copy(sha[:], d)
-		digests = append(digests, &sha)
-
-		// Verify digest
-		cd, ok := util.ConvertDigest(f.Digest)
-		if !ok {
-			return "", fmt.Errorf("invalid digest %v", f.Digest)
+		receipt, err := util.ConvertSignature(c.Receipt)
+		if err != nil {
+			return err
 		}
-		if !bytes.Equal(d, cd[:]) {
-			return "", fmt.Errorf("file: %v digests do not match", f.Name)
+		if !id.VerifyMessage([]byte(c.Signature), receipt) {
+			return fmt.Errorf("Could not verify receipt %v of comment id %v",
+				c.Receipt, c.CommentID)
 		}
 	}
 
-	// Metadata digests
-	for _, md := range mds {
-		b, err := base64.StdEncoding.DecodeString(md.Payload)
-		if err != nil {
-			return "", err
-		}
-		d := util.Digest(b)
-		var sha [sha256.Size]byte
-		copy(sha[:], d)
-		digests = append(digests, &sha)
+	fmt.Println("Comments successfully verified")
 
-		// Verify digest
-		cd, ok := util.ConvertDigest(md.Digest)
-		if !ok {
-			return "", fmt.Errorf("invalid digest %v", md.Digest)
-		}
-		if !bytes.Equal(d, cd[:]) {
-			return "", fmt.Errorf("metadata: %v digests do not match", md.Hint)
-		}
-	}
-
-	return hex.EncodeToString(merkle.Root(digests)[:]), nil
+	return nil
 }
 
 func _main() error {
 	flag.Parse()
 	args := flag.Args()
 
-	if len(args) != 1 {
+	// Validate flags and arguments
+	switch {
+	case len(args) != 1:
 		usage()
-		return fmt.Errorf("Must provide json bundle as input to the command")
+		return fmt.Errorf("Must provide json bundle path as input")
+	case *flagVerifyProposal && *flagVerifyComments:
+		usage()
+		return fmt.Errorf("Must choose only one verification type")
+	case !*flagVerifyProposal && !*flagVerifyComments:
+		usage()
+		return fmt.Errorf("Must choose at least one verification type")
 	}
 
+	// Read bundle payload
 	var payload []byte
 	payload, err := ioutil.ReadFile(args[0])
 	if err != nil {
 		return err
 	}
 
-	var record record
-	err = json.Unmarshal(payload, &record)
-	if err != nil {
-		return err
+	// Call verify method
+	switch {
+	case *flagVerifyProposal:
+		err = verifyProposal(payload)
+	case *flagVerifyComments:
+		err = verifyComments(payload)
 	}
 
-	// Verify merkle root
-	merkle := record.CensorshipRecord.Merkle
-	m, err := merkleRoot(record.Files, record.Metadata)
 	if err != nil {
 		return err
 	}
-	if m != merkle {
-		return fmt.Errorf("Merkle roots do not match: %v and %v", m, merkle)
-	}
-
-	// Verify record signature
-	id, err := util.IdentityFromString(record.PublicKey)
-	if err != nil {
-		return err
-	}
-	sig, err := util.ConvertSignature(record.Signature)
-	if err != nil {
-		return err
-	}
-	if !id.VerifyMessage([]byte(merkle), sig) {
-		return fmt.Errorf("Invalid record signature %v", record.Signature)
-	}
-
-	// Verify censorship record signature
-	id, err = util.IdentityFromString(record.ServerPublicKey)
-	if err != nil {
-		return err
-	}
-	sig, err = util.ConvertSignature(record.CensorshipRecord.Signature)
-	if err != nil {
-		return err
-	}
-	if !id.VerifyMessage([]byte(merkle+record.CensorshipRecord.Token), sig) {
-		return fmt.Errorf("Invalid censhorship record signature %v",
-			record.CensorshipRecord.Signature)
-	}
-
-	fmt.Println("Record successfully verified")
 
 	return nil
 }
