@@ -9,7 +9,7 @@ import (
 
 	"github.com/decred/politeia/politeiad/backend/tlogbe"
 	"github.com/decred/politeia/politeiad/sharedconfig"
-	tlog "github.com/google/trillian"
+	"github.com/google/trillian"
 )
 
 const (
@@ -22,7 +22,7 @@ const (
 var (
 	defaultHomeDir = sharedconfig.DefaultHomeDir
 
-	trillian = flag.String("trillian", "", "Trillian database name "+
+	flagTrillian = flag.String("trillian", "", "Trillian database name "+
 		"(vetted/unvetted)")
 
 	tclient *tlogbe.TrillianClient
@@ -47,6 +47,33 @@ func usage() {
 	fmt.Fprintf(os.Stderr, "\n")
 }
 
+func printTree(tree *trillian.Tree) {
+	fmt.Printf("TreeID            : %v\n", tree.TreeId)
+	fmt.Printf("TreeState         : %v\n", tree.TreeState)
+	fmt.Printf("TreeType          : %v\n", tree.TreeType)
+	fmt.Printf("HashStrategy      : %v\n", tree.HashStrategy)
+	fmt.Printf("HashAlgorithm     : %v\n", tree.HashAlgorithm)
+	fmt.Printf("SignatureAlgorithm: %v\n", tree.SignatureAlgorithm)
+	fmt.Printf("DisplayName       : %v\n", tree.DisplayName)
+	fmt.Printf("Description       : %v\n", tree.Description)
+	fmt.Printf("PublicKey         : %v\n", tree.PublicKey)
+	fmt.Printf("MaxRootDuration   : %v\n", tree.MaxRootDuration)
+	fmt.Printf("CreateTime        : %v\n", tree.CreateTime)
+	fmt.Printf("UpdateTime        : %v\n", tree.UpdateTime)
+	fmt.Printf("Deleted           : %v\n", tree.Deleted)
+	fmt.Printf("DeleteTime        : %v\n", tree.DeleteTime)
+}
+
+func printLeaf(leaf *trillian.LogLeaf) {
+	fmt.Printf("MerkleLeafHash    : %x\n", leaf.MerkleLeafHash)
+	fmt.Printf("LeafValue         : %x\n", leaf.LeafValue)
+	fmt.Printf("ExtraData         : %s\n", leaf.ExtraData)
+	fmt.Printf("LeafIndex         : %v\n", leaf.LeafIndex)
+	fmt.Printf("LeafIdentityHash  : %x\n", leaf.LeafIdentityHash)
+	fmt.Printf("QueueTimestamp    : %v\n", leaf.QueueTimestamp)
+	fmt.Printf("IntegrateTimestamp: %v\n", leaf.IntegrateTimestamp)
+}
+
 func tree() error {
 	treeID, err := strconv.ParseInt(flag.Args()[1], 10, 64)
 	if err != nil {
@@ -56,10 +83,10 @@ func tree() error {
 	tree, err := tclient.Tree(treeID)
 	if err != nil {
 		return fmt.Errorf("Tree ID %v not found on %v database",
-			treeID, *trillian)
+			treeID, *flagTrillian)
 	}
 
-	printTree(*tree)
+	printTree(tree)
 
 	return nil
 }
@@ -77,7 +104,7 @@ func leavesAll() error {
 
 	fmt.Printf("TreeID: %v\n", treeID)
 	for _, leaf := range leaves {
-		printLeaf(*leaf)
+		printLeaf(leaf)
 	}
 	if len(leaves) == 0 {
 		fmt.Printf("Tree has no leaves")
@@ -125,33 +152,6 @@ func leavesByRange() error {
 	return nil
 }
 
-func printTree(tree tlog.Tree) {
-	fmt.Printf("TreeID            : %v\n", tree.TreeId)
-	fmt.Printf("TreeState         : %v\n", tree.TreeState)
-	fmt.Printf("TreeType          : %v\n", tree.TreeType)
-	fmt.Printf("HashStrategy      : %v\n", tree.HashStrategy)
-	fmt.Printf("HashAlgorithm     : %v\n", tree.HashAlgorithm)
-	fmt.Printf("SignatureAlgorithm: %v\n", tree.SignatureAlgorithm)
-	fmt.Printf("DisplayName       : %v\n", tree.DisplayName)
-	fmt.Printf("Description       : %v\n", tree.Description)
-	fmt.Printf("PublicKey         : %v\n", tree.PublicKey)
-	fmt.Printf("MaxRootDuration   : %v\n", tree.MaxRootDuration)
-	fmt.Printf("CreateTime        : %v\n", tree.CreateTime)
-	fmt.Printf("UpdateTime        : %v\n", tree.UpdateTime)
-	fmt.Printf("Deleted           : %v\n", tree.Deleted)
-	fmt.Printf("DeleteTime        : %v\n", tree.DeleteTime)
-}
-
-func printLeaf(leaf tlog.LogLeaf) {
-	fmt.Printf("MerkleLeafHash    : %x\n", leaf.MerkleLeafHash)
-	fmt.Printf("LeafValue         : %x\n", leaf.LeafValue)
-	fmt.Printf("ExtraData         : %s\n", leaf.ExtraData)
-	fmt.Printf("LeafIndex         : %v\n", leaf.LeafIndex)
-	fmt.Printf("LeafIdentityHash  : %x\n", leaf.LeafIdentityHash)
-	fmt.Printf("QueueTimestamp    : %v\n", leaf.QueueTimestamp)
-	fmt.Printf("IntegrateTimestamp: %v\n", leaf.IntegrateTimestamp)
-}
-
 func _main() error {
 	flag.Parse()
 
@@ -162,14 +162,14 @@ func _main() error {
 	case len(args) == 0:
 		usage()
 		return fmt.Errorf("Must provide command action")
-	case *trillian == "":
+	case *flagTrillian == "":
 		usage()
 		return fmt.Errorf("Must provide the trillian database name")
 	}
 
 	// Set tlog client
 	var host, key string
-	switch *trillian {
+	switch *flagTrillian {
 	case "unvetted":
 		host = defaultTrillianHostUnvetted
 		key = filepath.Join(defaultHomeDir, defaultTrillianKeyUnvetted)
