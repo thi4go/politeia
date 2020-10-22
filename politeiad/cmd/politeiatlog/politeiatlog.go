@@ -143,7 +143,7 @@ func leavesByRange() error {
 	fmt.Printf("StartIndex: %v\n", startIndex)
 	fmt.Printf("Count     : %v\n", count)
 	for _, leaf := range leaves {
-		printLeaf(*leaf)
+		printLeaf(leaf)
 	}
 	if len(leaves) == 0 {
 		fmt.Printf("Tree has no leaves")
