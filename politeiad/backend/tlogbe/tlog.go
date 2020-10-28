@@ -28,12 +28,12 @@ import (
 
 const (
 	// Blob entry data descriptors
-	dataDescriptorFile           = "file"
-	dataDescriptorRecordMetadata = "recordmetadata"
-	dataDescriptorMetadataStream = "metadatastream"
-	dataDescriptorRecordIndex    = "recordindex"
-	dataDescriptorFreezeRecord   = "freezerecord"
-	dataDescriptorAnchor         = "anchor"
+	DataDescriptorFile           = "file"
+	DataDescriptorRecordMetadata = "recordmetadata"
+	DataDescriptorMetadataStream = "metadatastream"
+	DataDescriptorRecordIndex    = "recordindex"
+	DataDescriptorFreezeRecord   = "freezerecord"
+	DataDescriptorAnchor         = "anchor"
 
 	// The keys for kv store blobs are saved by stuffing them into the
 	// ExtraData field of their corresponding trillian log leaf. The
@@ -85,7 +85,7 @@ type tlog struct {
 	sync.Mutex
 	id            string
 	dcrtimeHost   string
-	encryptionKey *encryptionKey
+	encryptionKey *EncryptionKey
 	trillian      *TrillianClient
 	store         store.Blob
 	cron          *cron.Cron
@@ -96,7 +96,7 @@ type tlog struct {
 	droppingAnchor bool
 }
 
-// recordIndex contains the merkle leaf hashes of all the record content leaves
+// RecordIndex contains the merkle leaf hashes of all the record content leaves
 // for a specific record version and iteration. The record index can be used to
 // lookup the trillian log leaves for the record content and the log leaves can
 // be used to lookup the kv store blobs.
@@ -119,7 +119,7 @@ type tlog struct {
 // occurs during a record update. If a recordIndex exists in the tree then the
 // update is considered successful. Any record content leaves that are not part
 // of a recordIndex are considered to be orphaned and can be disregarded.
-type recordIndex struct {
+type RecordIndex struct {
 	// Version represents the version of the record. The version is
 	// only incremented when the record files are updated.
 	Version uint32 `json:"version"`
@@ -164,7 +164,7 @@ type recordIndex struct {
 	TreePointer int64 `json:"treepointer,omitempty"`
 }
 
-func treePointerExists(r recordIndex) bool {
+func treePointerExists(r RecordIndex) bool {
 	// Sanity checks
 	switch {
 	case !r.Frozen && r.TreePointer > 0:
@@ -181,17 +181,19 @@ func treePointerExists(r recordIndex) bool {
 	return r.TreePointer > 0
 }
 
-// blobIsEncrypted returns whether the provided blob has been prefixed with an
+// BlobIsEncrypted returns whether the provided blob has been prefixed with an
 // sbox header, indicating that it is an encrypted blob.
-func blobIsEncrypted(b []byte) bool {
+func BlobIsEncrypted(b []byte) bool {
 	return bytes.HasPrefix(b, []byte("sbox"))
 }
 
-func leafIsRecordIndex(l *trillian.LogLeaf) bool {
+// LeafIsRecordIndex checks if the leaf is a record index,
+func LeafIsRecordIndex(l *trillian.LogLeaf) bool {
 	return bytes.HasPrefix(l.ExtraData, []byte(keyPrefixRecordIndex))
 }
 
-func leafIsRecordContent(l *trillian.LogLeaf) bool {
+// LeafIsRecordContent checks if the leaf is a record content.
+func LeafIsRecordContent(l *trillian.LogLeaf) bool {
 	return bytes.HasPrefix(l.ExtraData, []byte(keyPrefixRecordContent))
 }
 
@@ -199,7 +201,8 @@ func leafIsAnchor(l *trillian.LogLeaf) bool {
 	return bytes.HasPrefix(l.ExtraData, []byte(keyPrefixAnchorRecord))
 }
 
-func extractKeyFromLeaf(l *trillian.LogLeaf) (string, error) {
+// ExtractKeyFromLeaf extracts the store key where the leaf blob is stored.
+func ExtractKeyFromLeaf(l *trillian.LogLeaf) (string, error) {
 	s := bytes.SplitAfter(l.ExtraData, []byte(":"))
 	if len(s) != 2 {
 		return "", fmt.Errorf("invalid key %s", l.ExtraData)
@@ -215,7 +218,7 @@ func convertBlobEntryFromFile(f backend.File) (*store.BlobEntry, error) {
 	hint, err := json.Marshal(
 		store.DataDescriptor{
 			Type:       store.DataTypeStructure,
-			Descriptor: dataDescriptorFile,
+			Descriptor: DataDescriptorFile,
 		})
 	if err != nil {
 		return nil, err
@@ -232,7 +235,7 @@ func convertBlobEntryFromMetadataStream(ms backend.MetadataStream) (*store.BlobE
 	hint, err := json.Marshal(
 		store.DataDescriptor{
 			Type:       store.DataTypeStructure,
-			Descriptor: dataDescriptorMetadataStream,
+			Descriptor: DataDescriptorMetadataStream,
 		})
 	if err != nil {
 		return nil, err
@@ -249,7 +252,7 @@ func convertBlobEntryFromRecordMetadata(rm backend.RecordMetadata) (*store.BlobE
 	hint, err := json.Marshal(
 		store.DataDescriptor{
 			Type:       store.DataTypeStructure,
-			Descriptor: dataDescriptorRecordMetadata,
+			Descriptor: DataDescriptorRecordMetadata,
 		})
 	if err != nil {
 		return nil, err
@@ -258,7 +261,7 @@ func convertBlobEntryFromRecordMetadata(rm backend.RecordMetadata) (*store.BlobE
 	return &be, nil
 }
 
-func convertBlobEntryFromRecordIndex(ri recordIndex) (*store.BlobEntry, error) {
+func convertBlobEntryFromRecordIndex(ri RecordIndex) (*store.BlobEntry, error) {
 	data, err := json.Marshal(ri)
 	if err != nil {
 		return nil, err
@@ -266,7 +269,7 @@ func convertBlobEntryFromRecordIndex(ri recordIndex) (*store.BlobEntry, error) {
 	hint, err := json.Marshal(
 		store.DataDescriptor{
 			Type:       store.DataTypeStructure,
-			Descriptor: dataDescriptorRecordIndex,
+			Descriptor: DataDescriptorRecordIndex,
 		})
 	if err != nil {
 		return nil, err
@@ -275,7 +278,7 @@ func convertBlobEntryFromRecordIndex(ri recordIndex) (*store.BlobEntry, error) {
 	return &be, nil
 }
 
-func convertBlobEntryFromAnchor(a anchor) (*store.BlobEntry, error) {
+func convertBlobEntryFromAnchor(a Anchor) (*store.BlobEntry, error) {
 	data, err := json.Marshal(a)
 	if err != nil {
 		return nil, err
@@ -283,7 +286,7 @@ func convertBlobEntryFromAnchor(a anchor) (*store.BlobEntry, error) {
 	hint, err := json.Marshal(
 		store.DataDescriptor{
 			Type:       store.DataTypeStructure,
-			Descriptor: dataDescriptorAnchor,
+			Descriptor: DataDescriptorAnchor,
 		})
 	if err != nil {
 		return nil, err
@@ -292,7 +295,9 @@ func convertBlobEntryFromAnchor(a anchor) (*store.BlobEntry, error) {
 	return &be, nil
 }
 
-func convertRecordIndexFromBlobEntry(be store.BlobEntry) (*recordIndex, error) {
+// ConvertRecordIndexFromBlobEntry converts the given blob entry to a
+// RecordIndex.
+func ConvertRecordIndexFromBlobEntry(be store.BlobEntry) (*RecordIndex, error) {
 	// Decode and validate data hint
 	b, err := base64.StdEncoding.DecodeString(be.DataHint)
 	if err != nil {
@@ -303,9 +308,9 @@ func convertRecordIndexFromBlobEntry(be store.BlobEntry) (*recordIndex, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal DataHint: %v", err)
 	}
-	if dd.Descriptor != dataDescriptorRecordIndex {
+	if dd.Descriptor != DataDescriptorRecordIndex {
 		return nil, fmt.Errorf("unexpected data descriptor: got %v, want %v",
-			dd.Descriptor, dataDescriptorRecordIndex)
+			dd.Descriptor, DataDescriptorRecordIndex)
 	}
 
 	// Decode data
@@ -321,16 +326,16 @@ func convertRecordIndexFromBlobEntry(be store.BlobEntry) (*recordIndex, error) {
 		return nil, fmt.Errorf("data is not coherent; got %x, want %x",
 			util.Digest(b), hash)
 	}
-	var ri recordIndex
+	var ri RecordIndex
 	err = json.Unmarshal(b, &ri)
 	if err != nil {
-		return nil, fmt.Errorf("unmarshal recordIndex: %v", err)
+		return nil, fmt.Errorf("unmarshal RecordIndex: %v", err)
 	}
 
 	return &ri, nil
 }
 
-func convertAnchorFromBlobEntry(be store.BlobEntry) (*anchor, error) {
+func convertAnchorFromBlobEntry(be store.BlobEntry) (*Anchor, error) {
 	// Decode and validate data hint
 	b, err := base64.StdEncoding.DecodeString(be.DataHint)
 	if err != nil {
@@ -341,9 +346,9 @@ func convertAnchorFromBlobEntry(be store.BlobEntry) (*anchor, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal DataHint: %v", err)
 	}
-	if dd.Descriptor != dataDescriptorAnchor {
+	if dd.Descriptor != DataDescriptorAnchor {
 		return nil, fmt.Errorf("unexpected data descriptor: got %v, want %v",
-			dd.Descriptor, dataDescriptorAnchor)
+			dd.Descriptor, DataDescriptorAnchor)
 	}
 
 	// Decode data
@@ -359,7 +364,7 @@ func convertAnchorFromBlobEntry(be store.BlobEntry) (*anchor, error) {
 		return nil, fmt.Errorf("data is not coherent; got %x, want %x",
 			util.Digest(b), hash)
 	}
-	var a anchor
+	var a Anchor
 	err = json.Unmarshal(b, &a)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal anchor: %v", err)
@@ -471,7 +476,7 @@ func (t *tlog) treePointer(treeID int64) (int64, bool) {
 	}
 
 	// Verify record index exists
-	var idx *recordIndex
+	var idx *RecordIndex
 	leavesAll, err := t.trillian.LeavesAll(treeID)
 	if err != nil {
 		err = fmt.Errorf("leavesAll: %v", err)
@@ -502,7 +507,7 @@ printErr:
 	return 0, false
 }
 
-func (t *tlog) recordIndexSave(treeID int64, ri recordIndex) error {
+func (t *tlog) recordIndexSave(treeID int64, ri RecordIndex) error {
 	// Save record index to the store
 	be, err := convertBlobEntryFromRecordIndex(ri)
 	if err != nil {
@@ -555,9 +560,9 @@ func (t *tlog) recordIndexSave(treeID int64, ri recordIndex) error {
 // the most recent iteration of the specified version. A version of 0 indicates
 // that the latest version should be returned. A errRecordNotFound is returned
 // if the provided version does not exist.
-func recordIndexVersion(indexes []recordIndex, version uint32) (*recordIndex, error) {
+func recordIndexVersion(indexes []RecordIndex, version uint32) (*RecordIndex, error) {
 	// Return the record index for the specified version
-	var ri *recordIndex
+	var ri *RecordIndex
 	if version == 0 {
 		// A version of 0 indicates that the most recent version should
 		// be returned.
@@ -581,7 +586,7 @@ func recordIndexVersion(indexes []recordIndex, version uint32) (*recordIndex, er
 	return ri, nil
 }
 
-func (t *tlog) recordIndexVersion(leaves []*trillian.LogLeaf, version uint32) (*recordIndex, error) {
+func (t *tlog) recordIndexVersion(leaves []*trillian.LogLeaf, version uint32) (*RecordIndex, error) {
 	indexes, err := t.recordIndexes(leaves)
 	if err != nil {
 		return nil, err
@@ -590,11 +595,11 @@ func (t *tlog) recordIndexVersion(leaves []*trillian.LogLeaf, version uint32) (*
 	return recordIndexVersion(indexes, version)
 }
 
-func (t *tlog) recordIndexLatest(leaves []*trillian.LogLeaf) (*recordIndex, error) {
+func (t *tlog) recordIndexLatest(leaves []*trillian.LogLeaf) (*RecordIndex, error) {
 	return t.recordIndexVersion(leaves, 0)
 }
 
-func (t *tlog) recordIndexes(leaves []*trillian.LogLeaf) ([]recordIndex, error) {
+func (t *tlog) recordIndexes(leaves []*trillian.LogLeaf) ([]RecordIndex, error) {
 	// Walk the leaves and compile the keys for all record indexes. It
 	// is possible for multiple indexes to exist for the same record
 	// version (they will have different iterations due to metadata
@@ -603,9 +608,9 @@ func (t *tlog) recordIndexes(leaves []*trillian.LogLeaf) ([]recordIndex, error) 
 	// version.
 	keys := make([]string, 0, 64)
 	for _, v := range leaves {
-		if leafIsRecordIndex(v) {
-			// This is a record index leaf. Extract they kv store key.
-			k, err := extractKeyFromLeaf(v)
+		if LeafIsRecordIndex(v) {
+			// This is a record index leaf. Extract the kv store key.
+			k, err := ExtractKeyFromLeaf(v)
 			if err != nil {
 				return nil, err
 			}
@@ -633,13 +638,13 @@ func (t *tlog) recordIndexes(leaves []*trillian.LogLeaf) ([]recordIndex, error) 
 		return nil, fmt.Errorf("record index not found: %v", missing)
 	}
 
-	indexes := make([]recordIndex, 0, len(blobs))
+	indexes := make([]RecordIndex, 0, len(blobs))
 	for _, v := range blobs {
 		be, err := store.Deblob(v)
 		if err != nil {
 			return nil, err
 		}
-		ri, err := convertRecordIndexFromBlobEntry(*be)
+		ri, err := ConvertRecordIndexFromBlobEntry(*be)
 		if err != nil {
 			return nil, err
 		}
@@ -689,7 +694,7 @@ type recordBlobsPrepareReply struct {
 	// unchanged between two versions of a record. It will be fully
 	// populated once the unique blobs haves been saved to the kv store
 	// and appended onto the trillian tree.
-	recordIndex recordIndex
+	recordIndex RecordIndex
 
 	// recordHashes contains a mapping of the record content hashes to
 	// the record content type. This is used to populate the record
@@ -709,7 +714,7 @@ type recordBlobsPrepareReply struct {
 // the blob kv store and appended onto a trillian tree.
 //
 // TODO test this function
-func recordBlobsPrepare(leavesAll []*trillian.LogLeaf, recordMD backend.RecordMetadata, metadata []backend.MetadataStream, files []backend.File, encryptionKey *encryptionKey) (*recordBlobsPrepareReply, error) {
+func recordBlobsPrepare(leavesAll []*trillian.LogLeaf, recordMD backend.RecordMetadata, metadata []backend.MetadataStream, files []backend.File, encryptionKey *EncryptionKey) (*recordBlobsPrepareReply, error) {
 	// Verify there are no duplicate or empty mdstream IDs
 	mdstreamIDs := make(map[uint64]struct{}, len(metadata))
 	for _, v := range metadata {
@@ -778,7 +783,7 @@ func recordBlobsPrepare(leavesAll []*trillian.LogLeaf, recordMD backend.RecordMe
 
 		// Any duplicates that are found are added to the record index
 		// since we already have the leaf data for them.
-		index = recordIndex{
+		index = RecordIndex{
 			Metadata: make(map[uint64][]byte, len(metadata)),
 			Files:    make(map[string][]byte, len(files)),
 		}
@@ -875,7 +880,7 @@ func recordBlobsPrepare(leavesAll []*trillian.LogLeaf, recordMD backend.RecordMe
 		}
 		// Encypt file blobs if encryption key has been set
 		if encryptionKey != nil {
-			b, err = encryptionKey.encrypt(0, b)
+			b, err = encryptionKey.Encrypt(0, b)
 			if err != nil {
 				return nil, err
 			}
@@ -899,7 +904,7 @@ func recordBlobsPrepare(leavesAll []*trillian.LogLeaf, recordMD backend.RecordMe
 // recordBlobsSave saves the provided blobs to the kv store, appends a leaf
 // to the trillian tree for each blob, then updates the record index with the
 // trillian leaf information and returns it.
-func (t *tlog) recordBlobsSave(treeID int64, rbpr recordBlobsPrepareReply) (*recordIndex, error) {
+func (t *tlog) recordBlobsSave(treeID int64, rbpr recordBlobsPrepareReply) (*RecordIndex, error) {
 	log.Tracef("recordBlobsSave: %v", t.id, treeID)
 
 	var (
@@ -1002,7 +1007,7 @@ func (t *tlog) recordSave(treeID int64, rm backend.RecordMetadata, metadata []ba
 	currIdx, err := t.recordIndexLatest(leavesAll)
 	if errors.Is(err, errRecordNotFound) {
 		// No record versions exist yet. This is ok.
-		currIdx = &recordIndex{
+		currIdx = &RecordIndex{
 			Metadata: make(map[uint64][]byte),
 			Files:    make(map[string][]byte),
 		}
@@ -1108,7 +1113,7 @@ func (t *tlog) recordSave(treeID int64, rm backend.RecordMetadata, metadata []ba
 // trillian tree. This code has been pulled out so that it can be called during
 // normal metadata updates as well as when an update requires a freeze record
 // to be saved along with the record index, such as when a record is censored.
-func (t *tlog) metadataSave(treeID int64, rm backend.RecordMetadata, metadata []backend.MetadataStream) (*recordIndex, error) {
+func (t *tlog) metadataSave(treeID int64, rm backend.RecordMetadata, metadata []backend.MetadataStream) (*RecordIndex, error) {
 	// Verify tree exists
 	if !t.treeExists(treeID) {
 		return nil, errRecordNotFound
@@ -1250,7 +1255,7 @@ func (t *tlog) recordDel(treeID int64) error {
 	for _, v := range leavesAll {
 		_, ok := merkles[hex.EncodeToString(v.MerkleLeafHash)]
 		if ok {
-			key, err := extractKeyFromLeaf(v)
+			key, err := ExtractKeyFromLeaf(v)
 			if err != nil {
 				return err
 			}
@@ -1292,7 +1297,7 @@ func (t *tlog) recordExists(treeID int64) bool {
 	}
 
 	// Verify record index exists
-	var idx *recordIndex
+	var idx *RecordIndex
 	leavesAll, err := t.trillian.LeavesAll(treeID)
 	if err != nil {
 		err = fmt.Errorf("leavesAll: %v", err)
@@ -1383,7 +1388,7 @@ func (t *tlog) record(treeID int64, version uint32) (*backend.Record, error) {
 		}
 
 		// Leaf is part of record content. Extract the kv store key.
-		key, err := extractKeyFromLeaf(v)
+		key, err := ExtractKeyFromLeaf(v)
 		if err != nil {
 			return nil, fmt.Errorf("extractKeyForRecordContent %x",
 				v.MerkleLeafHash)
@@ -1409,8 +1414,8 @@ func (t *tlog) record(treeID int64, version uint32) (*backend.Record, error) {
 	entries := make([]store.BlobEntry, 0, len(keys))
 	for _, v := range blobs {
 		var be *store.BlobEntry
-		if t.encryptionKey != nil && blobIsEncrypted(v) {
-			v, _, err = t.encryptionKey.decrypt(v)
+		if t.encryptionKey != nil && BlobIsEncrypted(v) {
+			v, _, err = t.encryptionKey.Decrypt(v)
 			if err != nil {
 				return nil, err
 			}
@@ -1418,7 +1423,7 @@ func (t *tlog) record(treeID int64, version uint32) (*backend.Record, error) {
 		be, err := store.Deblob(v)
 		if err != nil {
 			// Check if this is an encrypted blob that was not decrypted
-			if t.encryptionKey == nil && blobIsEncrypted(v) {
+			if t.encryptionKey == nil && BlobIsEncrypted(v) {
 				return nil, fmt.Errorf("blob is encrypted but no encryption " +
 					"key found to decrypt blob")
 			}
@@ -1463,21 +1468,21 @@ func (t *tlog) record(treeID int64, version uint32) (*backend.Record, error) {
 				util.Digest(b), hash)
 		}
 		switch dd.Descriptor {
-		case dataDescriptorRecordMetadata:
+		case DataDescriptorRecordMetadata:
 			var rm backend.RecordMetadata
 			err = json.Unmarshal(b, &rm)
 			if err != nil {
 				return nil, fmt.Errorf("unmarshal RecordMetadata: %v", err)
 			}
 			recordMD = &rm
-		case dataDescriptorMetadataStream:
+		case DataDescriptorMetadataStream:
 			var ms backend.MetadataStream
 			err = json.Unmarshal(b, &ms)
 			if err != nil {
 				return nil, fmt.Errorf("unmarshal MetadataStream: %v", err)
 			}
 			metadata = append(metadata, ms)
-		case dataDescriptorFile:
+		case DataDescriptorFile:
 			var f backend.File
 			err = json.Unmarshal(b, &f)
 			if err != nil {
@@ -1544,7 +1549,7 @@ func (t *tlog) blobsSave(treeID int64, keyPrefix string, blobs, hashes [][]byte,
 	// Encrypt blobs if specified
 	if encrypt {
 		for k, v := range blobs {
-			e, err := t.encryptionKey.encrypt(0, v)
+			e, err := t.encryptionKey.Encrypt(0, v)
 			if err != nil {
 				return nil, err
 			}
@@ -1632,7 +1637,7 @@ func (t *tlog) blobsDel(treeID int64, merkles [][]byte) error {
 	for _, v := range leaves {
 		_, ok := merkleHashes[hex.EncodeToString(v.MerkleLeafHash)]
 		if ok {
-			key, err := extractKeyFromLeaf(v)
+			key, err := ExtractKeyFromLeaf(v)
 			if err != nil {
 				return err
 			}
@@ -1699,7 +1704,7 @@ func (t *tlog) blobsByMerkle(treeID int64, merkles [][]byte) (map[string][]byte,
 		if !ok {
 			return nil, fmt.Errorf("leaf not found for merkle hash: %x", v)
 		}
-		k, err := extractKeyFromLeaf(l)
+		k, err := ExtractKeyFromLeaf(l)
 		if err != nil {
 			return nil, err
 		}
@@ -1716,8 +1721,8 @@ func (t *tlog) blobsByMerkle(treeID int64, merkles [][]byte) (map[string][]byte,
 
 	// Decrypt any encrypted blobs
 	for k, v := range blobs {
-		if blobIsEncrypted(v) {
-			b, _, err := t.encryptionKey.decrypt(v)
+		if BlobIsEncrypted(v) {
+			b, _, err := t.encryptionKey.Decrypt(v)
 			if err != nil {
 				return nil, err
 			}
@@ -1764,7 +1769,7 @@ func (t *tlog) blobsByKeyPrefix(treeID int64, keyPrefix string) ([][]byte, error
 	keys := make([]string, 0, len(leaves))
 	for _, v := range leaves {
 		if bytes.HasPrefix(v.ExtraData, []byte(keyPrefix)) {
-			k, err := extractKeyFromLeaf(v)
+			k, err := ExtractKeyFromLeaf(v)
 			if err != nil {
 				return nil, err
 			}
@@ -1791,8 +1796,8 @@ func (t *tlog) blobsByKeyPrefix(treeID int64, keyPrefix string) ([][]byte, error
 
 	// Decrypt any encrypted blobs
 	for k, v := range blobs {
-		if blobIsEncrypted(v) {
-			b, _, err := t.encryptionKey.decrypt(v)
+		if BlobIsEncrypted(v) {
+			b, _, err := t.encryptionKey.Decrypt(v)
 			if err != nil {
 				return nil, err
 			}
@@ -1832,7 +1837,7 @@ func (t *tlog) close() {
 
 func newTlog(id, homeDir, dataDir, trillianHost, trillianKeyFile, dcrtimeHost, encryptionKeyFile string) (*tlog, error) {
 	// Load encryption key if provided. An encryption key is optional.
-	var ek *encryptionKey
+	var ek *EncryptionKey
 	if encryptionKeyFile != "" {
 		f, err := os.Open(encryptionKeyFile)
 		if err != nil {
@@ -1847,7 +1852,7 @@ func newTlog(id, homeDir, dataDir, trillianHost, trillianKeyFile, dcrtimeHost, e
 			return nil, err
 		}
 		f.Close()
-		ek = newEncryptionKey(&key)
+		ek = NewEncryptionKey(&key)
 
 		log.Infof("Encryption key %v: %v", id, encryptionKeyFile)
 	}

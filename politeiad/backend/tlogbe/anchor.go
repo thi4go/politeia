@@ -39,7 +39,7 @@ const (
 // anchor represents an anchor, i.e. timestamp, of a trillian tree at a
 // specific tree size. A SHA256 digest of the LogRoot is timestamped using
 // dcrtime.
-type anchor struct {
+type Anchor struct {
 	TreeID       int64                 `json:"treeid"`
 	LogRoot      *types.LogRootV1      `json:"logroot"`
 	VerifyDigest *dcrtime.VerifyDigest `json:"verifydigest"`
@@ -47,7 +47,7 @@ type anchor struct {
 
 // anchorSave saves an anchor to the key-value store and appends a log leaf
 // to the trillian tree for the anchor.
-func (t *tlog) anchorSave(a anchor) error {
+func (t *tlog) anchorSave(a Anchor) error {
 	// Sanity checks
 	switch {
 	case a.TreeID == 0:
@@ -117,7 +117,7 @@ var (
 
 // anchorLatest returns the most recent anchor for the provided tree. A
 // errAnchorNotFound is returned if no anchor is found for the provided tree.
-func (t *tlog) anchorLatest(treeID int64) (*anchor, error) {
+func (t *tlog) anchorLatest(treeID int64) (*Anchor, error) {
 	// Get tree leaves
 	leavesAll, err := t.trillian.LeavesAll(treeID)
 	if err != nil {
@@ -129,7 +129,7 @@ func (t *tlog) anchorLatest(treeID int64) (*anchor, error) {
 	for i := len(leavesAll) - 1; i >= 0; i-- {
 		if leafIsAnchor(leavesAll[i]) {
 			// Extract key-value store key
-			key, err = extractKeyFromLeaf(leavesAll[i])
+			key, err = ExtractKeyFromLeaf(leavesAll[i])
 			if err != nil {
 				return nil, err
 			}
@@ -172,7 +172,7 @@ func (t *tlog) anchorLatest(treeID int64) (*anchor, error) {
 // confirmations. Once the timestamp has been dropped, the anchor record is
 // saved to the key-value store and the record histories of the corresponding
 // timestamped trees are updated.
-func (t *tlog) anchorWait(anchors []anchor, hashes []string) {
+func (t *tlog) anchorWait(anchors []Anchor, hashes []string) {
 	// Ensure we are not reentrant
 	t.Lock()
 	if t.droppingAnchor {
@@ -324,7 +324,7 @@ func (t *tlog) anchor() {
 	// anchored. Once the dcrtime timestamp is successful, these
 	// anchors will be updated with the timestamp data and saved to the
 	// key-value store.
-	anchors := make([]anchor, 0, len(trees))
+	anchors := make([]Anchor, 0, len(trees))
 
 	// Find the trees that need to be anchored. This is done by pulling
 	// the most recent anchor from the tree and checking the anchored
@@ -377,7 +377,7 @@ func (t *tlog) anchor() {
 			exitErr = fmt.Errorf("signedLogRoot %v: %v", v.TreeId, err)
 			return
 		}
-		anchors = append(anchors, anchor{
+		anchors = append(anchors, Anchor{
 			TreeID:  v.TreeId,
 			LogRoot: lr,
 		})
