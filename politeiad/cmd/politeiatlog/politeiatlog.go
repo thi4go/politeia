@@ -178,9 +178,9 @@ func leavesParse(leaves []*trillian.LogLeaf) error {
 	// Get record indexes for record content verification. MerkleHashes is used
 	// to directly check if a record content's leaf merkle hash is contained
 	// in any of the record indexes of the tree. If it is not contained, then
-	// a record update happened that wasn't successfull, and that did not
+	// a record update happened that wasn't successful, and that did not
 	// append the latest record index to the tree, which is the last step of
-	// a successfull record update.
+	// a successful record update.
 	merkleHashes := make(map[string]bool)
 	for _, key := range indexes {
 		be, err := store.Deblob(blobs[key])
