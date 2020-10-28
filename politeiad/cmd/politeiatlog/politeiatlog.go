@@ -11,11 +11,12 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 
 	"github.com/decred/politeia/politeiad/backend"
 	"github.com/decred/politeia/politeiad/backend/tlogbe"
 	"github.com/decred/politeia/politeiad/backend/tlogbe/store"
+	"github.com/decred/politeia/politeiad/plugins/comments"
+	"github.com/decred/politeia/politeiad/plugins/ticketvote"
 	"github.com/decred/politeia/politeiad/sharedconfig"
 	"github.com/google/trillian"
 )
@@ -50,6 +51,7 @@ var (
 
 	// Flags
 	flagTestnet  = flag.Bool("testnet", false, "Use testnet network")
+	flagBlobs    = flag.Bool("blobs", false, "Print leaf blobs")
 	flagKey      = flag.String("key", defaultEncryptionKey, "Encryption key")
 	flagTrillian = flag.String("trillian", "", "Trillian database name "+
 		"(vetted/unvetted)")
@@ -89,58 +91,17 @@ func printLogLeaf(leaf *trillian.LogLeaf) {
 	fmt.Printf("ExtraData     : %s\n", leaf.ExtraData)
 	fmt.Printf("LeafIndex     : %v\n", leaf.LeafIndex)
 	fmt.Printf("Timestamp     : %v\n", leaf.IntegrateTimestamp)
-
 }
 
-func printRecordMetadata(rm backend.RecordMetadata) {
-	fmt.Printf("  Version  : %v\n", rm.Version)
-	fmt.Printf("  Iteration: %v\n", rm.Iteration)
-	fmt.Printf("  Status   : %v\n", rm.Status)
-	fmt.Printf("  Merkle   : %s\n", rm.Merkle)
-	fmt.Printf("  Timestamp: %v\n", rm.Timestamp)
-	fmt.Printf("  Token    : %s\n", rm.Token)
-}
-
-func printMetadataStream(ms backend.MetadataStream) {
-	fmt.Printf("  ID     : %v\n", ms.ID)
-	fmt.Printf("  Payload: %s\n", ms.Payload)
-}
-
-func printFile(f backend.File) {
-	fmt.Printf("  Name   : %s\n", f.Name)
-	fmt.Printf("  MIME   : %s\n", f.MIME)
-	fmt.Printf("  Digest : %s\n", f.Digest)
-	fmt.Printf("  Payload: <removed for readability>\n")
-}
-
-func printAnchor(anchor tlogbe.Anchor) {
-	fmt.Printf("  TreeID : %d\n", anchor.TreeID)
-	fmt.Printf("  LogRoot: <removed for readability>\n")
-	fmt.Printf("  VerifyDigest:\n")
-	fmt.Printf("    Digest   : %s\n", anchor.VerifyDigest.Digest)
-	fmt.Printf("    Result   : %v\n", anchor.VerifyDigest.Result)
-	fmt.Printf("    Timestamp: %v\n",
-		anchor.VerifyDigest.ServerTimestamp)
-	fmt.Printf("    ChainInformation:\n")
-	fmt.Printf("      Transaction: %v\n",
-		anchor.VerifyDigest.ChainInformation.Transaction)
-	fmt.Printf("      MerkleRoot : %v\n",
-		anchor.VerifyDigest.ChainInformation.MerkleRoot)
-	fmt.Printf("      Timestamp  : %v\n",
-		anchor.VerifyDigest.ChainInformation.ChainTimestamp)
-}
-
-func printRecordIndex(ri tlogbe.RecordIndex) {
-	// Build files names string
-	var fs strings.Builder
-	for i := range ri.Files {
-		fs.WriteString(i + ", ")
+func printJSON(body interface{}) error {
+	// Pretty print the body
+	b, err := json.MarshalIndent(body, "", "  ")
+	if err != nil {
+		return fmt.Errorf("MarshalIndent: %v", err)
 	}
-	fmt.Printf("  Version    : %d\n", ri.Version)
-	fmt.Printf("  Iteration  : %d\n", ri.Iteration)
-	fmt.Printf("  Files      : %s\n", fs.String())
-	fmt.Printf("  Frozen     : %t\n", ri.Frozen)
-	fmt.Printf("  TreePointer: %d\n", ri.TreePointer)
+	fmt.Fprintf(os.Stdout, "%s\n", b)
+
+	return nil
 }
 
 // leavesParse parses the tree leaves to print relevant information.
@@ -214,6 +175,16 @@ func leavesParse(leaves []*trillian.LogLeaf) error {
 		// Print trillian log leaf data
 		printLogLeaf(leaf)
 
+		if tlogbe.LeafIsRecordContent(leaf) {
+			// Check if this record content leaf is contained in a record index
+			_, ok := merkleHashes[hex.EncodeToString(leaf.MerkleLeafHash)]
+			if !ok {
+				// If it's not, skip blob data and print error
+				fmt.Println(errRecordContent)
+				continue
+			}
+		}
+
 		// Sanity checks for leaf blob
 		blob, ok := blobs[key]
 		if !ok {
@@ -227,6 +198,12 @@ func leavesParse(leaves []*trillian.LogLeaf) error {
 			}
 			continue
 		}
+
+		if !*flagBlobs {
+			continue
+		}
+
+		// Decode blob
 		if tlogbe.BlobIsEncrypted(blob) {
 			blob, _, err = encryptionKey.Decrypt(blob)
 			if err != nil {
@@ -258,62 +235,89 @@ func leavesParse(leaves []*trillian.LogLeaf) error {
 		}
 		switch dd.Descriptor {
 		case tlogbe.DataDescriptorRecordMetadata:
-			// Check if this record content leaf is contained in a record index
-			_, ok := merkleHashes[hex.EncodeToString(leaf.MerkleLeafHash)]
-			if !ok {
-				// If it's not, skip blob data print and print error
-				fmt.Println(errRecordContent)
-				continue
-			}
 			var rm backend.RecordMetadata
 			err = json.Unmarshal(d, &rm)
 			if err != nil {
 				return err
 			}
-			printRecordMetadata(rm)
+			printJSON(rm)
 		case tlogbe.DataDescriptorMetadataStream:
-			// Check if this record content leaf is contained in a record index
-			_, ok := merkleHashes[hex.EncodeToString(leaf.MerkleLeafHash)]
-			if !ok {
-				// If it's not, skip blob data print and print error
-				fmt.Println(errRecordContent)
-				continue
-			}
 			var ms backend.MetadataStream
 			err = json.Unmarshal(d, &ms)
 			if err != nil {
 				return err
 			}
-			printMetadataStream(ms)
+			printJSON(ms)
 		case tlogbe.DataDescriptorFile:
-			// Check if this record content leaf is contained in a record index
-			_, ok := merkleHashes[hex.EncodeToString(leaf.MerkleLeafHash)]
-			if !ok {
-				// If it's not, skip blob data print and print error
-				fmt.Println(errRecordContent)
-				continue
-			}
 			var f backend.File
 			err = json.Unmarshal(d, &f)
 			if err != nil {
 				return err
 			}
-			printFile(f)
+			// Clean field
+			f.Payload = "removed by politeiatlog for readability"
+			printJSON(f)
 		case tlogbe.DataDescriptorAnchor:
 			var anchor tlogbe.Anchor
 			err = json.Unmarshal(d, &anchor)
 			if err != nil {
 				return err
 			}
-			printAnchor(anchor)
+			// Clean field
+			anchor.VerifyDigest.ChainInformation.MerklePath.Hashes = nil
+			printJSON(anchor)
 		case tlogbe.DataDescriptorRecordIndex:
 			var ri tlogbe.RecordIndex
 			err = json.Unmarshal(d, &ri)
 			if err != nil {
 				return err
 			}
-			printRecordIndex(ri)
+			printJSON(ri)
 		case tlogbe.DataDescriptorFreezeRecord:
+		case tlogbe.DataDescriptorCommentAdd:
+			var c comments.CommentAdd
+			err = json.Unmarshal(d, &c)
+			if err != nil {
+				return err
+			}
+			printJSON(c)
+		case tlogbe.DataDescriptorCommentDel:
+			var c comments.CommentDel
+			err = json.Unmarshal(d, &c)
+			if err != nil {
+				return err
+			}
+			printJSON(c)
+		case tlogbe.DataDescriptorCommentVote:
+			var c comments.CommentVote
+			err = json.Unmarshal(d, &c)
+			if err != nil {
+				return err
+			}
+			printJSON(c)
+		case tlogbe.DataDescriptorAuthorizeDetails:
+			var ad ticketvote.AuthorizeDetails
+			err = json.Unmarshal(b, &ad)
+			if err != nil {
+				return err
+			}
+			printJSON(ad)
+		case tlogbe.DataDescriptorVoteDetails:
+			var vd ticketvote.VoteDetails
+			err = json.Unmarshal(b, &vd)
+			if err != nil {
+				return err
+			}
+			// Clean field
+			vd.EligibleTickets = nil
+			printJSON(vd)
+		case tlogbe.DataDescriptorCastVoteDetails:
+			var cvd ticketvote.CastVoteDetails
+			err = json.Unmarshal(b, &cvd)
+			if err != nil {
+				return err
+			}
+			printJSON(cvd)
 		default:
 			fmt.Printf("Unknown data descriptor %v\n", dd.Descriptor)
 		}

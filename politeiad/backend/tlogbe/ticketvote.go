@@ -44,9 +44,9 @@ const (
 	filenameSummary = "{token}-summary.json"
 
 	// Blob entry data descriptors
-	dataDescriptorAuthDetails     = "authdetails"
-	dataDescriptorVoteDetails     = "votedetails"
-	dataDescriptorCastVoteDetails = "castvotedetails"
+	DataDescriptorAuthDetails     = "authdetails"
+	DataDescriptorVoteDetails     = "votedetails"
+	DataDescriptorCastVoteDetails = "castvotedetails"
 
 	// Prefixes that are appended to key-value store keys before
 	// storing them in the log leaf ExtraData field.
@@ -498,9 +498,9 @@ func convertAuthDetailsFromBlobEntry(be store.BlobEntry) (*ticketvote.AuthDetail
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal DataHint: %v", err)
 	}
-	if dd.Descriptor != dataDescriptorAuthDetails {
+	if dd.Descriptor != DataDescriptorAuthDetails {
 		return nil, fmt.Errorf("unexpected data descriptor: got %v, want %v",
-			dd.Descriptor, dataDescriptorAuthDetails)
+			dd.Descriptor, DataDescriptorAuthDetails)
 	}
 
 	// Decode data
@@ -536,9 +536,9 @@ func convertVoteDetailsFromBlobEntry(be store.BlobEntry) (*ticketvote.VoteDetail
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal DataHint: %v", err)
 	}
-	if dd.Descriptor != dataDescriptorVoteDetails {
+	if dd.Descriptor != DataDescriptorVoteDetails {
 		return nil, fmt.Errorf("unexpected data descriptor: got %v, want %v",
-			dd.Descriptor, dataDescriptorVoteDetails)
+			dd.Descriptor, DataDescriptorVoteDetails)
 	}
 
 	// Decode data
@@ -574,9 +574,9 @@ func convertCastVoteDetailsFromBlobEntry(be store.BlobEntry) (*ticketvote.CastVo
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal DataHint: %v", err)
 	}
-	if dd.Descriptor != dataDescriptorCastVoteDetails {
+	if dd.Descriptor != DataDescriptorCastVoteDetails {
 		return nil, fmt.Errorf("unexpected data descriptor: got %v, want %v",
-			dd.Descriptor, dataDescriptorCastVoteDetails)
+			dd.Descriptor, DataDescriptorCastVoteDetails)
 	}
 
 	// Decode data
@@ -609,7 +609,7 @@ func convertBlobEntryFromAuthDetails(ad ticketvote.AuthDetails) (*store.BlobEntr
 	hint, err := json.Marshal(
 		store.DataDescriptor{
 			Type:       store.DataTypeStructure,
-			Descriptor: dataDescriptorAuthDetails,
+			Descriptor: DataDescriptorAuthDetails,
 		})
 	if err != nil {
 		return nil, err
@@ -626,7 +626,7 @@ func convertBlobEntryFromVoteDetails(vd ticketvote.VoteDetails) (*store.BlobEntr
 	hint, err := json.Marshal(
 		store.DataDescriptor{
 			Type:       store.DataTypeStructure,
-			Descriptor: dataDescriptorVoteDetails,
+			Descriptor: DataDescriptorVoteDetails,
 		})
 	if err != nil {
 		return nil, err
@@ -643,7 +643,7 @@ func convertBlobEntryFromCastVoteDetails(cv ticketvote.CastVoteDetails) (*store.
 	hint, err := json.Marshal(
 		store.DataDescriptor{
 			Type:       store.DataTypeStructure,
-			Descriptor: dataDescriptorCastVoteDetails,
+			Descriptor: DataDescriptorCastVoteDetails,
 		})
 	if err != nil {
 		return nil, err

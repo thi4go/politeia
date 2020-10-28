@@ -40,9 +40,9 @@ import (
 
 const (
 	// Blob entry data descriptors
-	dataDescriptorCommentAdd  = "commentadd"
-	dataDescriptorCommentDel  = "commentdel"
-	dataDescriptorCommentVote = "commentvote"
+	DataDescriptorCommentAdd  = "commentadd"
+	DataDescriptorCommentDel  = "commentdel"
+	DataDescriptorCommentVote = "commentvote"
 
 	// Prefixes that are appended to key-value store keys before
 	// storing them in the log leaf ExtraData field.
@@ -246,7 +246,7 @@ func convertBlobEntryFromCommentAdd(c comments.CommentAdd) (*store.BlobEntry, er
 	hint, err := json.Marshal(
 		store.DataDescriptor{
 			Type:       store.DataTypeStructure,
-			Descriptor: dataDescriptorCommentAdd,
+			Descriptor: DataDescriptorCommentAdd,
 		})
 	if err != nil {
 		return nil, err
@@ -263,7 +263,7 @@ func convertBlobEntryFromCommentDel(c comments.CommentDel) (*store.BlobEntry, er
 	hint, err := json.Marshal(
 		store.DataDescriptor{
 			Type:       store.DataTypeStructure,
-			Descriptor: dataDescriptorCommentDel,
+			Descriptor: DataDescriptorCommentDel,
 		})
 	if err != nil {
 		return nil, err
@@ -280,7 +280,7 @@ func convertBlobEntryFromCommentVote(c comments.CommentVote) (*store.BlobEntry, 
 	hint, err := json.Marshal(
 		store.DataDescriptor{
 			Type:       store.DataTypeStructure,
-			Descriptor: dataDescriptorCommentVote,
+			Descriptor: DataDescriptorCommentVote,
 		})
 	if err != nil {
 		return nil, err
@@ -300,9 +300,9 @@ func convertCommentAddFromBlobEntry(be store.BlobEntry) (*comments.CommentAdd, e
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal DataHint: %v", err)
 	}
-	if dd.Descriptor != dataDescriptorCommentAdd {
+	if dd.Descriptor != DataDescriptorCommentAdd {
 		return nil, fmt.Errorf("unexpected data descriptor: got %v, want %v",
-			dd.Descriptor, dataDescriptorCommentAdd)
+			dd.Descriptor, DataDescriptorCommentAdd)
 	}
 
 	// Decode data
@@ -338,9 +338,9 @@ func convertCommentDelFromBlobEntry(be store.BlobEntry) (*comments.CommentDel, e
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal DataHint: %v", err)
 	}
-	if dd.Descriptor != dataDescriptorCommentDel {
+	if dd.Descriptor != DataDescriptorCommentDel {
 		return nil, fmt.Errorf("unexpected data descriptor: got %v, want %v",
-			dd.Descriptor, dataDescriptorCommentDel)
+			dd.Descriptor, DataDescriptorCommentDel)
 	}
 
 	// Decode data
@@ -376,9 +376,9 @@ func convertCommentVoteFromBlobEntry(be store.BlobEntry) (*comments.CommentVote,
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal DataHint: %v", err)
 	}
-	if dd.Descriptor != dataDescriptorCommentVote {
+	if dd.Descriptor != DataDescriptorCommentVote {
 		return nil, fmt.Errorf("unexpected data descriptor: got %v, want %v",
-			dd.Descriptor, dataDescriptorCommentVote)
+			dd.Descriptor, DataDescriptorCommentVote)
 	}
 
 	// Decode data
