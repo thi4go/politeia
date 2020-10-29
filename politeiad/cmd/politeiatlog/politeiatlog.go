@@ -199,6 +199,7 @@ func leavesParse(leaves []*trillian.LogLeaf) error {
 			continue
 		}
 
+		// Skip blob printing if flag is not set
 		if !*flagBlobs {
 			continue
 		}
@@ -273,7 +274,6 @@ func leavesParse(leaves []*trillian.LogLeaf) error {
 				return err
 			}
 			printJSON(ri)
-		case tlogbe.DataDescriptorFreezeRecord:
 		case tlogbe.DataDescriptorCommentAdd:
 			var c comments.CommentAdd
 			err = json.Unmarshal(d, &c)
