@@ -295,8 +295,8 @@ func leavesParse(leaves []*trillian.LogLeaf) error {
 				return err
 			}
 			printJSON(c)
-		case tlogbe.DataDescriptorAuthorizeDetails:
-			var ad ticketvote.AuthorizeDetails
+		case tlogbe.DataDescriptorAuthDetails:
+			var ad ticketvote.AuthDetails
 			err = json.Unmarshal(b, &ad)
 			if err != nil {
 				return err
