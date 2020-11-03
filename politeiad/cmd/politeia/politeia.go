@@ -624,7 +624,7 @@ func verifyRecord() error {
 		return err
 	}
 
-	// Verify merkle+token msg agains't signature
+	// Verify merkle+token msg against signature
 	if !id.VerifyMessage([]byte(merkleRoot+token), sig) {
 		return fmt.Errorf("Invalid censorship record signature")
 	}
