@@ -605,25 +605,35 @@ func newRecord() error {
 func verifyRecord() error {
 	flags := flag.Args()[1:] // Chop off action.
 
+	// Action arguments
+	pk := flags[0]
+	token := flags[1]
+	merkleRoot := flags[2]
+	signature := flags[3]
+
 	if len(flags) < 4 {
 		return fmt.Errorf("Must pass all input parameters")
 	}
 
-	id, err := util.IdentityFromString(flags[0])
+	id, err := util.IdentityFromString(pk)
 	if err != nil {
 		return err
 	}
-	signature, err := util.ConvertSignature(flags[3])
+	sig, err := util.ConvertSignature(signature)
 	if err != nil {
 		return err
 	}
 
 	// Verify merkle+token msg agains't signature
-	if !id.VerifyMessage([]byte(flags[2]+flags[1]), signature) {
+	if !id.VerifyMessage([]byte(merkleRoot+token), sig) {
 		return fmt.Errorf("Invalid censorship record signature")
 	}
 
-	fmt.Printf("Record successfully verified")
+	fmt.Printf("Public key : %s\n", pk)
+	fmt.Printf("Token      : %s\n", token)
+	fmt.Printf("Merkle root: %s\n", merkleRoot)
+	fmt.Printf("Signature  : %s\n\n", signature)
+	fmt.Println("Record successfully verified")
 
 	return nil
 }

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
+	"strings"
 
 	pi "github.com/decred/politeia/politeiawww/api/pi/v1"
 	wwwutil "github.com/decred/politeia/politeiawww/util"
@@ -46,7 +48,8 @@ func verifyProposal(payload []byte) error {
 	var prop proposal
 	err := json.Unmarshal(payload, &prop)
 	if err != nil {
-		return err
+		return fmt.Errorf("Proposal bundle JSON in bad format, make sure to " +
+			"download it from the GUI.")
 	}
 
 	// Verify merkle root
@@ -86,6 +89,13 @@ func verifyProposal(payload []byte) error {
 			prop.CensorshipRecord.Signature)
 	}
 
+	fmt.Println("Proposal signature:")
+	fmt.Printf("  Public key: %s\n", prop.PublicKey)
+	fmt.Printf("  Signature : %s\n", prop.Signature)
+	fmt.Println("Proposal censorship record signature:")
+	fmt.Printf("  Merkle root: %s\n", prop.CensorshipRecord.Merkle)
+	fmt.Printf("  Public key : %s\n", prop.ServerPublicKey)
+	fmt.Printf("  Signature  : %s\n\n", prop.CensorshipRecord.Signature)
 	fmt.Println("Proposal successfully verified")
 
 	return nil
@@ -95,7 +105,8 @@ func verifyComments(payload []byte) error {
 	var comments comments
 	err := json.Unmarshal(payload, &comments)
 	if err != nil {
-		return err
+		return fmt.Errorf("Comments bundle JSON in bad format, make sure to " +
+			"download it from the GUI.")
 	}
 
 	for _, c := range comments {
@@ -112,9 +123,13 @@ func verifyComments(payload []byte) error {
 			return fmt.Errorf("Could not verify receipt %v of comment id %v",
 				c.Receipt, c.CommentID)
 		}
+		fmt.Printf("Comment ID: %s\n", c.CommentID)
+		fmt.Printf("  Public key: %s\n", c.ServerPublicKey)
+		fmt.Printf("  Receipt   : %s\n", c.Receipt)
+		fmt.Printf("  Signature : %s\n", c.Signature)
 	}
 
-	fmt.Println("Comments successfully verified")
+	fmt.Println("\nComments successfully verified")
 
 	return nil
 }
@@ -131,14 +146,12 @@ func _main() error {
 	case *flagVerifyProposal && *flagVerifyComments:
 		usage()
 		return fmt.Errorf("Must choose only one verification type")
-	case !*flagVerifyProposal && !*flagVerifyComments:
-		usage()
-		return fmt.Errorf("Must choose at least one verification type")
 	}
 
 	// Read bundle payload
+	file := args[0]
 	var payload []byte
-	payload, err := ioutil.ReadFile(args[0])
+	payload, err := ioutil.ReadFile(file)
 	if err != nil {
 		return err
 	}
@@ -146,16 +159,17 @@ func _main() error {
 	// Call verify method
 	switch {
 	case *flagVerifyProposal:
-		err = verifyProposal(payload)
+		return verifyProposal(payload)
 	case *flagVerifyComments:
-		err = verifyComments(payload)
+		return verifyComments(payload)
+	default:
+		// No flags used, read filename and try to call corresponding
+		// verify method
+		if strings.Contains(path.Base(file), "comments") {
+			return verifyComments(payload)
+		}
+		return verifyProposal(payload)
 	}
-
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func main() {
