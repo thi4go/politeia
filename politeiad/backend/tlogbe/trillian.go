@@ -32,6 +32,30 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+var _ TClient = (*trillianClient)(nil)
+
+// TClient provides an interface with basic tree operations needed for a
+// trillian client.
+type TClient interface {
+	tree(treeID int64) (*trillian.Tree, error)
+
+	treesAll() ([]*trillian.Tree, error)
+
+	treeNew() (*trillian.Tree, *trillian.SignedLogRoot, error)
+
+	leavesAll(treeID int64) ([]*trillian.LogLeaf, error)
+
+	leavesByRange(treeID, startIndex, count int64) ([]*trillian.LogLeaf, error)
+
+	leavesAppend(treeID int64, leaves []*trillian.LogLeaf) ([]QueuedLeafProof,
+		*types.LogRootV1, error)
+
+	signedLogRootForTree(tree *trillian.Tree) (*trillian.SignedLogRoot,
+		*types.LogRootV1, error)
+
+	close()
+}
+
 // trillianClient provides a client that abstracts over the existing
 // TrillianLogClient and TrillianAdminClient. This provides a simplified API
 // for the backend to use and ensures that proper verification of all trillian
@@ -52,18 +76,18 @@ type leafProof struct {
 	Proof *trillian.Proof
 }
 
-// queuedLeafProof contains the results of a leaf append command, i.e. the
+// QueuedLeafProof contains the results of a leaf append command, i.e. the
 // QueuedLeaf, and the inclusion proof for that leaf. The inclusion proof will
 // not be present if the leaf append command failed. The QueuedLeaf will
 // contain the error code from the failure.
-type queuedLeafProof struct {
+type QueuedLeafProof struct {
 	QueuedLeaf *trillian.QueuedLogLeaf
 	Proof      *trillian.Proof
 }
 
-// merkleLeafHash returns the merkle leaf hash for the provided leaf value.
+// MerkleLeafHash returns the merkle leaf hash for the provided leaf value.
 // This is the same merkle leaf hash that is calculated by trillian.
-func merkleLeafHash(leafValue []byte) []byte {
+func MerkleLeafHash(leafValue []byte) []byte {
 	h := sha256.New()
 	h.Write([]byte{rfc6962.RFC6962LeafHashPrefix})
 	h.Write(leafValue)
@@ -278,13 +302,13 @@ func (t *trillianClient) signedLogRoot(treeID int64) (*trillian.SignedLogRoot, *
 // fail to be appended. Note leaves that are duplicates will fail and it is the
 // callers responsibility to determine how they should be handled.
 //
-// Trillain DOES NOT guarantee that the leaves of a queued leaves batch are
+// Trillian DOES NOT guarantee that the leaves of a queued leaves batch are
 // appended in the order in which they were received. Trillian is also not
 // consistent about the order that leaves are appended in. At the time of
 // writing this I have not looked into why this is or if there are other
 // methods that can be used. DO NOT rely on the leaves being in a specific
 // order.
-func (t *trillianClient) leavesAppend(treeID int64, leaves []*trillian.LogLeaf) ([]queuedLeafProof, *types.LogRootV1, error) {
+func (t *trillianClient) leavesAppend(treeID int64, leaves []*trillian.LogLeaf) ([]QueuedLeafProof, *types.LogRootV1, error) {
 	log.Tracef("trillian leavesAppend: %v", treeID)
 
 	// Get the latest signed log root
@@ -356,9 +380,9 @@ func (t *trillianClient) leavesAppend(treeID int64, leaves []*trillian.LogLeaf) 
 	}
 
 	// Get inclusion proofs
-	proofs := make([]queuedLeafProof, 0, len(qlr.QueuedLeaves))
+	proofs := make([]QueuedLeafProof, 0, len(qlr.QueuedLeaves))
 	for _, v := range qlr.QueuedLeaves {
-		qlp := queuedLeafProof{
+		qlp := QueuedLeafProof{
 			QueuedLeaf: v,
 		}
 
@@ -371,7 +395,7 @@ func (t *trillianClient) leavesAppend(treeID int64, leaves []*trillian.LogLeaf) 
 		if c == codes.OK {
 			// Verify that the merkle leaf hash is using the expected
 			// hashing algorithm.
-			m := merkleLeafHash(v.Leaf.LeafValue)
+			m := MerkleLeafHash(v.Leaf.LeafValue)
 			if !bytes.Equal(m, v.Leaf.MerkleLeafHash) {
 				e := fmt.Sprintf("unknown merkle leaf hash: got %x, want %x",
 					m, v.Leaf.MerkleLeafHash)
@@ -521,6 +545,11 @@ func newTrillianClient(host, keyFile string) (*trillianClient, error) {
 		publicKey:  signer.Public(),
 	}
 
+	var test TClient
+
+	test = &t
+
+	fmt.Println(test)
 	// The grpc dial requires a little time to connect
 	time.Sleep(time.Second)
 

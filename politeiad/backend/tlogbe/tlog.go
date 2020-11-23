@@ -86,7 +86,7 @@ type tlog struct {
 	id            string
 	dcrtimeHost   string
 	encryptionKey *encryptionKey
-	trillian      *trillianClient
+	trillian      TClient
 	store         store.Blob
 	cron          *cron.Cron
 
