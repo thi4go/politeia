@@ -33,5 +33,4 @@ func TestNewRecord(t *testing.T) {
 	}
 
 	fmt.Println(rmd)
-	fmt.Println(tlogBackend.inv.unvetted)
 }
