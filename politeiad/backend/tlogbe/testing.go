@@ -5,6 +5,8 @@
 package tlogbe
 
 import (
+	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,8 +14,10 @@ import (
 
 	"github.com/decred/dcrd/dcrutil/v3"
 	v1 "github.com/decred/dcrtime/api/v1"
+	"github.com/decred/politeia/politeiad/api/v1/mime"
 	"github.com/decred/politeia/politeiad/backend"
 	"github.com/decred/politeia/politeiad/backend/tlogbe/store/filesystem"
+	"github.com/decred/politeia/util"
 	"github.com/google/trillian"
 	"github.com/google/trillian/crypto/keys"
 	"github.com/google/trillian/crypto/keys/der"
@@ -25,6 +29,35 @@ var (
 	defaultTestDir     = dcrutil.AppDataDir("politeiadtest", false)
 	defaultTestDataDir = filepath.Join(defaultTestDir, "data")
 )
+
+func newBackendFile(t *testing.T, fileName string) backend.File {
+	t.Helper()
+
+	r, err := util.Random(64)
+	if err != nil {
+		r = []byte{0, 0, 0} // random byte data
+	}
+
+	payload := hex.EncodeToString(r)
+	digest := hex.EncodeToString(util.Digest([]byte(payload)))
+	b64 := base64.StdEncoding.EncodeToString([]byte(payload))
+
+	return backend.File{
+		Name:    fileName,
+		MIME:    mime.DetectMimeType([]byte(payload)),
+		Digest:  digest,
+		Payload: b64,
+	}
+}
+
+func newBackendMetadataStream(t *testing.T, id uint64, payload string) backend.MetadataStream {
+	t.Helper()
+
+	return backend.MetadataStream{
+		ID:      id,
+		Payload: payload,
+	}
+}
 
 // newTestTClient provides a trillian client implementation used for
 // testing. It implements the TClient interface, which includes all major
