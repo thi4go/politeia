@@ -52,7 +52,7 @@ type TrillianClient interface {
 
 	leavesByRange(treeID, startIndex, count int64) ([]*trillian.LogLeaf, error)
 
-	leavesAppend(treeID int64, leaves []*trillian.LogLeaf) ([]QueuedLeafProof,
+	leavesAppend(treeID int64, leaves []*trillian.LogLeaf) ([]queuedLeafProof,
 		*types.LogRootV1, error)
 
 	signedLogRootForTree(tree *trillian.Tree) (*trillian.SignedLogRoot,
@@ -81,18 +81,18 @@ type leafProof struct {
 	Proof *trillian.Proof
 }
 
-// QueuedLeafProof contains the results of a leaf append command, i.e. the
+// queuedLeafProof contains the results of a leaf append command, i.e. the
 // QueuedLeaf, and the inclusion proof for that leaf. The inclusion proof will
 // not be present if the leaf append command failed. The QueuedLeaf will
 // contain the error code from the failure.
-type QueuedLeafProof struct {
+type queuedLeafProof struct {
 	QueuedLeaf *trillian.QueuedLogLeaf
 	Proof      *trillian.Proof
 }
 
-// MerkleLeafHash returns the merkle leaf hash for the provided leaf value.
+// merkleLeafHash returns the merkle leaf hash for the provided leaf value.
 // This is the same merkle leaf hash that is calculated by trillian.
-func MerkleLeafHash(leafValue []byte) []byte {
+func merkleLeafHash(leafValue []byte) []byte {
 	h := sha256.New()
 	h.Write([]byte{rfc6962.RFC6962LeafHashPrefix})
 	h.Write(leafValue)
@@ -326,7 +326,7 @@ func (t *tClient) signedLogRoot(treeID int64) (*trillian.SignedLogRoot, *types.L
 // order.
 //
 // This function satisfies the TrillianClient interface.
-func (t *tClient) leavesAppend(treeID int64, leaves []*trillian.LogLeaf) ([]QueuedLeafProof, *types.LogRootV1, error) {
+func (t *tClient) leavesAppend(treeID int64, leaves []*trillian.LogLeaf) ([]queuedLeafProof, *types.LogRootV1, error) {
 	log.Tracef("trillian leavesAppend: %v", treeID)
 
 	// Get the latest signed log root
@@ -398,9 +398,9 @@ func (t *tClient) leavesAppend(treeID int64, leaves []*trillian.LogLeaf) ([]Queu
 	}
 
 	// Get inclusion proofs
-	proofs := make([]QueuedLeafProof, 0, len(qlr.QueuedLeaves))
+	proofs := make([]queuedLeafProof, 0, len(qlr.QueuedLeaves))
 	for _, v := range qlr.QueuedLeaves {
-		qlp := QueuedLeafProof{
+		qlp := queuedLeafProof{
 			QueuedLeaf: v,
 		}
 
@@ -413,7 +413,7 @@ func (t *tClient) leavesAppend(treeID int64, leaves []*trillian.LogLeaf) ([]Queu
 		if c == codes.OK {
 			// Verify that the merkle leaf hash is using the expected
 			// hashing algorithm.
-			m := MerkleLeafHash(v.Leaf.LeafValue)
+			m := merkleLeafHash(v.Leaf.LeafValue)
 			if !bytes.Equal(m, v.Leaf.MerkleLeafHash) {
 				e := fmt.Sprintf("unknown merkle leaf hash: got %x, want %x",
 					m, v.Leaf.MerkleLeafHash)
@@ -637,7 +637,7 @@ func (t *testTClient) leavesByRange(treeID, startIndex, count int64) ([]*trillia
 // corresponding trillian tree in memory.
 //
 // This function satisfies the TrillianClient interface.
-func (t *testTClient) leavesAppend(treeID int64, leaves []*trillian.LogLeaf) ([]QueuedLeafProof, *types.LogRootV1, error) {
+func (t *testTClient) leavesAppend(treeID int64, leaves []*trillian.LogLeaf) ([]queuedLeafProof, *types.LogRootV1, error) {
 	t.Lock()
 	defer t.Unlock()
 
@@ -652,13 +652,13 @@ func (t *testTClient) leavesAppend(treeID int64, leaves []*trillian.LogLeaf) ([]
 
 	// Set merkle hash for each leaf and append to memory. Also append the
 	// queued value for the leaves to be returned by the function.
-	var queued []QueuedLeafProof
+	var queued []queuedLeafProof
 	for _, l := range leaves {
 		l.LeafIndex = index
-		l.MerkleLeafHash = MerkleLeafHash(l.LeafValue)
+		l.MerkleLeafHash = merkleLeafHash(l.LeafValue)
 		t.leaves[treeID] = append(t.leaves[treeID], l)
 
-		queued = append(queued, QueuedLeafProof{
+		queued = append(queued, queuedLeafProof{
 			QueuedLeaf: &trillian.QueuedLogLeaf{
 				Leaf:   l,
 				Status: nil,
