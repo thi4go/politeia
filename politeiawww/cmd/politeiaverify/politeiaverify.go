@@ -14,6 +14,8 @@ import (
 	"github.com/decred/politeia/util"
 )
 
+// proposal is used to unmarshal the data that is cointaned in the proposal
+// JSON bundles downloded from the GUI.
 type proposal struct {
 	PublicKey        string              `json:"publickey"`
 	Signature        string              `json:"signature"`
@@ -23,6 +25,8 @@ type proposal struct {
 	ServerPublicKey  string              `json:"serverpublickey"`
 }
 
+// comments is used to unmarshal the data that is cointaned in the comments
+// JSON bundles downloded from the GUI.
 type comments []struct {
 	CommentID       string `json:"commentid"`
 	Receipt         string `json:"receipt"`
