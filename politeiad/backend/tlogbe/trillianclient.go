@@ -681,9 +681,7 @@ func (t *testTClient) signedLogRootForTree(tree *trillian.Tree) (*trillian.Signe
 // close is a stub to satisfy the interface. It is not used for testing.
 //
 // This function satisfies the TrillianClient interface.
-func (t *testTClient) close() {
-	return
-}
+func (t *testTClient) close() {}
 
 func newTClient(host, keyFile string) (*tClient, error) {
 	// Setup trillian key file
