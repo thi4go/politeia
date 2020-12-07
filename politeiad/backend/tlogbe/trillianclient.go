@@ -35,13 +35,13 @@ import (
 )
 
 var (
-	_ TrillianClient = (*tClient)(nil)
-	_ TrillianClient = (*testTClient)(nil)
+	_ trillianClient = (*tClient)(nil)
+	_ trillianClient = (*testTClient)(nil)
 )
 
-// TrillianClient provides an interface with basic tree operations needed for a
+// trillianClient provides an interface with basic tree operations needed for a
 // trillian client.
-type TrillianClient interface {
+type trillianClient interface {
 	tree(treeID int64) (*trillian.Tree, error)
 
 	treesAll() ([]*trillian.Tree, error)
