@@ -13,7 +13,6 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"sync"
-	"testing"
 	"time"
 
 	"github.com/decred/politeia/util"
@@ -789,24 +788,3 @@ func (t *testTClient) inclusionProofs(treeID int64, merkleLeafHashes [][]byte, l
 //
 // This function satisfies the trillianClient interface.
 func (t *testTClient) close() {}
-
-// newTestTClient returns a new testTClient.
-func newTestTClient(t *testing.T) (*testTClient, error) {
-	// Create trillian private key
-	key, err := newTrillianKey()
-	if err != nil {
-		return nil, err
-	}
-	keyDer, err := der.MarshalPrivateKey(key)
-	if err != nil {
-		return nil, err
-	}
-
-	return &testTClient{
-		trees:  make(map[int64]*trillian.Tree),
-		leaves: make(map[int64][]*trillian.LogLeaf),
-		privateKey: &keyspb.PrivateKey{
-			Der: keyDer,
-		},
-	}, nil
-}
