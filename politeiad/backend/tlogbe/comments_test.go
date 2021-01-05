@@ -7,6 +7,7 @@ package tlogbe
 import (
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/decred/politeia/politeiad/api/v1/identity"
@@ -222,4 +223,56 @@ func TestCmdNew(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCmdEdit(t *testing.T) {
+	commentsPlugin, tlogBackend, err := newTestCommentsPlugin(t)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// New record
+	md := []backend.MetadataStream{
+		newBackendMetadataStream(t, 1, ""),
+	}
+	fs := []backend.File{
+		newBackendFile(t, "index.md"),
+	}
+	rec, err := tlogBackend.New(md, fs)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// Helpers
+	comment := "random comment"
+
+	// tokenRandom := hex.EncodeToString(tokenFromTreeID(123))
+
+	// New comment
+	nc := newComment(t, rec.Token, comment, comments.StateUnvetted, 0)
+	ncEncoded, err := comments.EncodeNew(nc)
+	if err != nil {
+		t.Error(err)
+	}
+	reply, err := commentsPlugin.cmdNew(string(ncEncoded))
+	if err != nil {
+		t.Error(err)
+	}
+	fmt.Println(reply)
+
+	// // Setup edit comment plugin tests
+	// var tests = []struct {
+	// 	description  string
+	// 	token        string
+	// 	comment      string
+	// 	state        comments.StateT
+	// 	parentID     uint32
+	// 	badSignature bool
+	// 	badPublicKey bool
+	// 	wantErr      *backend.PluginUserError
+	// }{
+	// 	{
+	// 		"first",
+	// 	}
+	// }
 }
