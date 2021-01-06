@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/hex"
-	"fmt"
 	"image"
 	"image/jpeg"
 	"image/png"
@@ -24,7 +23,7 @@ import (
 	"github.com/decred/politeia/util"
 )
 
-func setupTestDataDir(t *testing.T) (string, string, func(dir string)) {
+func setupTestDataDir(t *testing.T) (string, string, func()) {
 	t.Helper()
 
 	testDir, err := ioutil.TempDir("", "tlog.backend.test")
@@ -34,8 +33,8 @@ func setupTestDataDir(t *testing.T) (string, string, func(dir string)) {
 
 	testDataDir := filepath.Join(testDir, "data")
 
-	return testDir, testDataDir, func(dir string) {
-		err = os.RemoveAll(dir)
+	return testDir, testDataDir, func() {
+		err = os.RemoveAll(testDir)
 		if err != nil {
 			t.Fatalf("RemoveAll: %v", err)
 		}
@@ -122,7 +121,7 @@ func newBackendMetadataStream(t *testing.T, id uint64, payload string) backend.M
 }
 
 // newTestTlog returns a tlog used for testing.
-func newTestTlog(t *testing.T, dir, id string) (*tlog, error) {
+func newTestTlog(t *testing.T, dir, id string) *tlog {
 	dir, err := ioutil.TempDir(dir, id)
 	if err != nil {
 		t.Fatalf("TempDir: %v", err)
@@ -132,7 +131,7 @@ func newTestTlog(t *testing.T, dir, id string) (*tlog, error) {
 
 	tclient, err := newTestTClient(t)
 	if err != nil {
-		return nil, err
+		t.Fatalf("newTestTClient: %v", err)
 	}
 
 	tlog := tlog{
@@ -142,27 +141,20 @@ func newTestTlog(t *testing.T, dir, id string) (*tlog, error) {
 		store:         store,
 	}
 
-	return &tlog, nil
+	return &tlog
 }
 
 // newTestTlogBackend returns a tlog backend for testing. It wraps
 // tlog and trillian client, providing the framework needed for
 // writing tlog backend tests.
-func newTestTlogBackend(t *testing.T, homeDir, dataDir string) (*tlogBackend, error) {
-	tlogVetted, err := newTestTlog(t, homeDir, "vetted")
-	if err != nil {
-		return nil, err
-	}
-	tlogUnvetted, err := newTestTlog(t, homeDir, "unvetted")
-	if err != nil {
-		return nil, err
-	}
+func newTestTlogBackend(t *testing.T) (*tlogBackend, func()) {
+	dir, dataDir, cleanup := setupTestDataDir(t)
 
 	tlogBackend := tlogBackend{
-		homeDir:       homeDir,
+		homeDir:       dir,
 		dataDir:       dataDir,
-		unvetted:      tlogUnvetted,
-		vetted:        tlogVetted,
+		unvetted:      newTestTlog(t, dir, "unvetted"),
+		vetted:        newTestTlog(t, dir, "vetted"),
 		plugins:       make(map[string]plugin),
 		prefixes:      make(map[string][]byte),
 		vettedTreeIDs: make(map[string]int64),
@@ -172,12 +164,12 @@ func newTestTlogBackend(t *testing.T, homeDir, dataDir string) (*tlogBackend, er
 		},
 	}
 
-	err = tlogBackend.setup()
+	err := tlogBackend.setup()
 	if err != nil {
-		return nil, fmt.Errorf("setup: %v", err)
+		t.Fatalf("setup: %v", err)
 	}
 
-	return &tlogBackend, nil
+	return &tlogBackend, cleanup
 }
 
 // recordContentTests defines the type used to describe the content
