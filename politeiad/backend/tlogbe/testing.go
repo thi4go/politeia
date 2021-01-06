@@ -24,7 +24,7 @@ import (
 	"github.com/decred/politeia/util"
 )
 
-func setupTestDataDir(t *testing.T) (string, string, func(s string)) {
+func setupTestDataDir(t *testing.T) (string, string, func(dir string)) {
 	t.Helper()
 
 	testDir, err := ioutil.TempDir("", "tlog.backend.test")
