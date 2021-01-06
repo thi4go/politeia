@@ -23,24 +23,6 @@ import (
 	"github.com/decred/politeia/util"
 )
 
-func setupTestDataDir(t *testing.T) (string, string, func()) {
-	t.Helper()
-
-	testDir, err := ioutil.TempDir("", "tlog.backend.test")
-	if err != nil {
-		t.Fatalf("TempDir: %v", err)
-	}
-
-	testDataDir := filepath.Join(testDir, "data")
-
-	return testDir, testDataDir, func() {
-		err = os.RemoveAll(testDir)
-		if err != nil {
-			t.Fatalf("RemoveAll: %v", err)
-		}
-	}
-}
-
 func newBackendFile(t *testing.T, fileName string) backend.File {
 	t.Helper()
 
@@ -148,13 +130,17 @@ func newTestTlog(t *testing.T, dir, id string) *tlog {
 // tlog and trillian client, providing the framework needed for
 // writing tlog backend tests.
 func newTestTlogBackend(t *testing.T) (*tlogBackend, func()) {
-	dir, dataDir, cleanup := setupTestDataDir(t)
+	testDir, err := ioutil.TempDir("", "tlog.backend.test")
+	if err != nil {
+		t.Fatalf("TempDir: %v", err)
+	}
+	testDataDir := filepath.Join(testDir, "data")
 
 	tlogBackend := tlogBackend{
-		homeDir:       dir,
-		dataDir:       dataDir,
-		unvetted:      newTestTlog(t, dir, "unvetted"),
-		vetted:        newTestTlog(t, dir, "vetted"),
+		homeDir:       testDir,
+		dataDir:       testDataDir,
+		unvetted:      newTestTlog(t, testDir, "unvetted"),
+		vetted:        newTestTlog(t, testDir, "vetted"),
 		plugins:       make(map[string]plugin),
 		prefixes:      make(map[string][]byte),
 		vettedTreeIDs: make(map[string]int64),
@@ -164,12 +150,17 @@ func newTestTlogBackend(t *testing.T) (*tlogBackend, func()) {
 		},
 	}
 
-	err := tlogBackend.setup()
+	err = tlogBackend.setup()
 	if err != nil {
 		t.Fatalf("setup: %v", err)
 	}
 
-	return &tlogBackend, cleanup
+	return &tlogBackend, func() {
+		err = os.RemoveAll(testDir)
+		if err != nil {
+			t.Fatalf("RemoveAll: %v", err)
+		}
+	}
 }
 
 // recordContentTests defines the type used to describe the content
