@@ -14,7 +14,9 @@ import (
 )
 
 func TestNewRecord(t *testing.T) {
-	tlogBackend, err := newTestTlogBackend(t)
+	dir, dataDir, cleanup := setupTestDataDir(t)
+	defer cleanup(dir)
+	tlogBackend, err := newTestTlogBackend(t, dir, dataDir)
 	if err != nil {
 		t.Error(err)
 	}
@@ -52,7 +54,9 @@ func TestNewRecord(t *testing.T) {
 }
 
 func TestUpdateUnvettedRecord(t *testing.T) {
-	tlogBackend, err := newTestTlogBackend(t)
+	dir, dataDir, cleanup := setupTestDataDir(t)
+	defer cleanup(dir)
+	tlogBackend, err := newTestTlogBackend(t, dir, dataDir)
 	if err != nil {
 		t.Error(err)
 	}
@@ -219,7 +223,9 @@ func TestUpdateUnvettedRecord(t *testing.T) {
 }
 
 func TestUpdateVettedRecord(t *testing.T) {
-	tlogBackend, err := newTestTlogBackend(t)
+	dir, dataDir, cleanup := setupTestDataDir(t)
+	defer cleanup(dir)
+	tlogBackend, err := newTestTlogBackend(t, dir, dataDir)
 	if err != nil {
 		t.Error(err)
 	}
@@ -405,7 +411,9 @@ func TestUpdateVettedRecord(t *testing.T) {
 }
 
 func TestUpdateUnvettedMetadata(t *testing.T) {
-	tlogBackend, err := newTestTlogBackend(t)
+	dir, dataDir, cleanup := setupTestDataDir(t)
+	defer cleanup(dir)
+	tlogBackend, err := newTestTlogBackend(t, dir, dataDir)
 	if err != nil {
 		t.Error(err)
 	}
@@ -576,7 +584,9 @@ func TestUpdateUnvettedMetadata(t *testing.T) {
 }
 
 func TestUpdateVettedMetadata(t *testing.T) {
-	tlogBackend, err := newTestTlogBackend(t)
+	dir, dataDir, cleanup := setupTestDataDir(t)
+	defer cleanup(dir)
+	tlogBackend, err := newTestTlogBackend(t, dir, dataDir)
 	if err != nil {
 		t.Error(err)
 	}
@@ -764,7 +774,9 @@ func TestUpdateVettedMetadata(t *testing.T) {
 }
 
 func TestUnvettedExists(t *testing.T) {
-	tlogBackend, err := newTestTlogBackend(t)
+	dir, dataDir, cleanup := setupTestDataDir(t)
+	defer cleanup(dir)
+	tlogBackend, err := newTestTlogBackend(t, dir, dataDir)
 	if err != nil {
 		t.Error(err)
 	}
@@ -803,7 +815,9 @@ func TestUnvettedExists(t *testing.T) {
 }
 
 func TestVettedExists(t *testing.T) {
-	tlogBackend, err := newTestTlogBackend(t)
+	dir, dataDir, cleanup := setupTestDataDir(t)
+	defer cleanup(dir)
+	tlogBackend, err := newTestTlogBackend(t, dir, dataDir)
 	if err != nil {
 		t.Error(err)
 	}
@@ -857,7 +871,9 @@ func TestVettedExists(t *testing.T) {
 }
 
 func TestGetUnvetted(t *testing.T) {
-	tlogBackend, err := newTestTlogBackend(t)
+	dir, dataDir, cleanup := setupTestDataDir(t)
+	defer cleanup(dir)
+	tlogBackend, err := newTestTlogBackend(t, dir, dataDir)
 	if err != nil {
 		t.Error(err)
 	}
@@ -901,7 +917,9 @@ func TestGetUnvetted(t *testing.T) {
 }
 
 func TestGetVetted(t *testing.T) {
-	tlogBackend, err := newTestTlogBackend(t)
+	dir, dataDir, cleanup := setupTestDataDir(t)
+	defer cleanup(dir)
+	tlogBackend, err := newTestTlogBackend(t, dir, dataDir)
 	if err != nil {
 		t.Error(err)
 	}
@@ -953,7 +971,9 @@ func TestGetVetted(t *testing.T) {
 }
 
 func TestSetUnvettedStatus(t *testing.T) {
-	tlogBackend, err := newTestTlogBackend(t)
+	dir, dataDir, cleanup := setupTestDataDir(t)
+	defer cleanup(dir)
+	tlogBackend, err := newTestTlogBackend(t, dir, dataDir)
 	if err != nil {
 		t.Error(err)
 	}
@@ -1119,7 +1139,9 @@ func TestSetUnvettedStatus(t *testing.T) {
 }
 
 func TestSetVettedStatus(t *testing.T) {
-	tlogBackend, err := newTestTlogBackend(t)
+	dir, dataDir, cleanup := setupTestDataDir(t)
+	defer cleanup(dir)
+	tlogBackend, err := newTestTlogBackend(t, dir, dataDir)
 	if err != nil {
 		t.Error(err)
 	}
