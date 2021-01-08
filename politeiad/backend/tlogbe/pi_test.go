@@ -49,44 +49,48 @@ func TestCmdCommentNew(t *testing.T) {
 
 	// Helpers
 	comment := "random comment"
-
 	tokenRandom := hex.EncodeToString(tokenFromTreeID(123))
+	parentID := uint32(0)
+
+	// test case: invalid comment state
+	invalidCommentState := newComment(t, rec.Token, comment,
+		comments.StateInvalid, parentID)
+
+	// test case: invalid token
+	invalidToken := newComment(t, "invalid", comment, comments.StateUnvetted,
+		parentID)
+
+	// test case: record not found
+	recordNotFound := newComment(t, tokenRandom, comment,
+		comments.StateUnvetted, parentID)
+
+	// test case: success
+	success := newComment(t, rec.Token, comment, comments.StateUnvetted,
+		parentID)
 
 	// Setup comment new pi plugin tests
 	var tests = []struct {
 		description string
-		token       string
-		comment     string
-		state       comments.StateT
-		parentID    uint32
+		payload     comments.New
 		wantErr     *backend.PluginUserError
 	}{
 		{
-			"wrong comment state",
-			rec.Token,
-			comment,
-			comments.StateInvalid,
-			0,
+			"invalid comment state",
+			invalidCommentState,
 			&backend.PluginUserError{
 				ErrorCode: int(pi.ErrorStatusPropStateInvalid),
 			},
 		},
 		{
 			"invalid token",
-			"invalid",
-			comment,
-			comments.StateUnvetted,
-			0,
+			invalidToken,
 			&backend.PluginUserError{
 				ErrorCode: int(pi.ErrorStatusPropTokenInvalid),
 			},
 		},
 		{
 			"record not found",
-			tokenRandom,
-			comment,
-			comments.StateUnvetted,
-			0,
+			recordNotFound,
 			&backend.PluginUserError{
 				ErrorCode: int(pi.ErrorStatusPropNotFound),
 			},
@@ -95,10 +99,7 @@ func TestCmdCommentNew(t *testing.T) {
 		// refactor
 		{
 			"success",
-			rec.Token,
-			comment,
-			comments.StateUnvetted,
-			0,
+			success,
 			nil,
 		},
 	}
@@ -106,9 +107,7 @@ func TestCmdCommentNew(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
 			// New Comment
-			nc := newComment(t, test.token, test.comment, test.state,
-				test.parentID)
-			ncEncoded, err := comments.EncodeNew(nc)
+			ncEncoded, err := comments.EncodeNew(test.payload)
 			if err != nil {
 				t.Error(err)
 			}
