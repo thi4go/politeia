@@ -31,112 +31,101 @@ func TestCmdNew(t *testing.T) {
 
 	// Helpers
 	comment := "random comment"
-
 	tokenRandom := hex.EncodeToString(tokenFromTreeID(123))
+	parentID := uint32(0)
+
+	// test case: invalid comment state
+	invalidCommentState := newComment(t, rec.Token, comment,
+		comments.StateInvalid, parentID)
+
+	// test case: invalid token
+	invalidToken := newComment(t, "invalid", comment, comments.StateUnvetted,
+		parentID)
+
+	// test case: invalid signature
+	invalidSig := newComment(t, rec.Token, comment, comments.StateUnvetted,
+		parentID)
+	invalidSig.Signature = "bad sig"
+
+	// test case: invalid public key
+	invalidPk := newComment(t, rec.Token, comment, comments.StateUnvetted,
+		parentID)
+	invalidPk.PublicKey = "bad pk"
+
+	// test case: comment max length exceeded
+	invalidLength := newComment(t, rec.Token, newCommentMaxLengthExceeded(t),
+		comments.StateUnvetted, parentID)
+
+	// test case: invalid parent ID
+	invalidParentID := newComment(t, rec.Token, comment,
+		comments.StateUnvetted, 3)
+
+	// test case: record not found
+	recordNotFound := newComment(t, tokenRandom, comment,
+		comments.StateUnvetted, parentID)
+
+	// test case: success
+	success := newComment(t, rec.Token, comment, comments.StateUnvetted,
+		parentID)
 
 	// Setup new comment plugin tests
 	var tests = []struct {
-		description  string
-		token        string
-		comment      string
-		state        comments.StateT
-		parentID     uint32
-		badSignature bool
-		badPublicKey bool
-		wantErr      *backend.PluginUserError
+		description string
+		payload     comments.New
+		wantErr     *backend.PluginUserError
 	}{
 		{
-			"wrong comment state",
-			rec.Token,
-			comment,
-			comments.StateInvalid,
-			0,
-			false,
-			false,
+			"invalid comment state",
+			invalidCommentState,
 			&backend.PluginUserError{
 				ErrorCode: int(comments.ErrorStatusStateInvalid),
 			},
 		},
 		{
 			"invalid token",
-			"invalid",
-			comment,
-			comments.StateUnvetted,
-			0,
-			false,
-			false,
+			invalidToken,
 			&backend.PluginUserError{
 				ErrorCode: int(comments.ErrorStatusTokenInvalid),
 			},
 		},
 		{
 			"invalid signature",
-			rec.Token,
-			comment,
-			comments.StateUnvetted,
-			0,
-			true,
-			false,
+			invalidSig,
 			&backend.PluginUserError{
 				ErrorCode: int(comments.ErrorStatusSignatureInvalid),
 			},
 		},
 		{
 			"invalid public key",
-			rec.Token,
-			comment,
-			comments.StateUnvetted,
-			0,
-			false,
-			true,
+			invalidPk,
 			&backend.PluginUserError{
 				ErrorCode: int(comments.ErrorStatusPublicKeyInvalid),
 			},
 		},
 		{
 			"comment max length exceeded",
-			rec.Token,
-			newCommentMaxLengthExceeded(t),
-			comments.StateUnvetted,
-			0,
-			false,
-			false,
+			invalidLength,
 			&backend.PluginUserError{
 				ErrorCode: int(comments.ErrorStatusCommentTextInvalid),
 			},
 		},
 		{
 			"invalid parent ID",
-			rec.Token,
-			comment,
-			comments.StateUnvetted,
-			1,
-			false,
-			false,
+			invalidParentID,
 			&backend.PluginUserError{
 				ErrorCode: int(comments.ErrorStatusParentIDInvalid),
 			},
 		},
 		{
 			"record not found",
-			tokenRandom,
-			comment,
-			comments.StateUnvetted,
-			0,
-			false,
-			false,
+			recordNotFound,
 			&backend.PluginUserError{
 				ErrorCode: int(comments.ErrorStatusRecordNotFound),
 			},
 		},
 		{
 			"success",
-			rec.Token,
-			comment,
-			comments.StateUnvetted,
-			0,
-			false,
-			false,
+			success,
 			nil,
 		},
 	}
@@ -144,15 +133,7 @@ func TestCmdNew(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
 			// New Comment
-			nc := newComment(t, test.token, test.comment, test.state,
-				test.parentID)
-			if test.badSignature {
-				nc.Signature = "bad signature"
-			}
-			if test.badPublicKey {
-				nc.PublicKey = "bad public key"
-			}
-			ncEncoded, err := comments.EncodeNew(nc)
+			ncEncoded, err := comments.EncodeNew(test.payload)
 			if err != nil {
 				t.Error(err)
 			}
