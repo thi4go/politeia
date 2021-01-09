@@ -73,7 +73,7 @@ func TestCmdCommentNew(t *testing.T) {
 				ParentID:  parentID,
 				Comment:   comment,
 				PublicKey: uid.Public.String(),
-				Signature: commentSignature(t, id, comments.StateInvalid,
+				Signature: commentSignature(t, uid, comments.StateInvalid,
 					rec.Token, comment, parentID),
 			},
 			&backend.PluginUserError{
@@ -89,7 +89,7 @@ func TestCmdCommentNew(t *testing.T) {
 				ParentID:  parentID,
 				Comment:   comment,
 				PublicKey: uid.Public.String(),
-				Signature: commentSignature(t, id, comments.StateUnvetted,
+				Signature: commentSignature(t, uid, comments.StateUnvetted,
 					rec.Token, comment, parentID),
 			},
 			&backend.PluginUserError{
@@ -105,7 +105,7 @@ func TestCmdCommentNew(t *testing.T) {
 				ParentID:  parentID,
 				Comment:   comment,
 				PublicKey: uid.Public.String(),
-				Signature: commentSignature(t, id, comments.StateUnvetted,
+				Signature: commentSignature(t, uid, comments.StateUnvetted,
 					tokenRandom, comment, parentID),
 			},
 			&backend.PluginUserError{
@@ -123,7 +123,7 @@ func TestCmdCommentNew(t *testing.T) {
 				ParentID:  parentID,
 				Comment:   comment,
 				PublicKey: uid.Public.String(),
-				Signature: commentSignature(t, id, comments.StateUnvetted,
+				Signature: commentSignature(t, uid, comments.StateUnvetted,
 					rec.Token, comment, parentID),
 			},
 			nil,
@@ -145,7 +145,7 @@ func TestCmdCommentNew(t *testing.T) {
 			var pluginUserError backend.PluginUserError
 			if errors.As(err, &pluginUserError) {
 				if test.wantErr == nil {
-					t.Errorf("got error %v, want nil", err)
+					t.Errorf("got error %v, want nil2", err)
 					return
 				}
 				if pluginUserError.ErrorCode != test.wantErr.ErrorCode {
