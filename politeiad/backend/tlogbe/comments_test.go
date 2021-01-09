@@ -7,7 +7,6 @@ package tlogbe
 import (
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/decred/politeia/politeiad/api/v1/identity"
@@ -226,10 +225,8 @@ func TestCmdNew(t *testing.T) {
 }
 
 func TestCmdEdit(t *testing.T) {
-	commentsPlugin, tlogBackend, err := newTestCommentsPlugin(t)
-	if err != nil {
-		t.Error(err)
-	}
+	commentsPlugin, tlogBackend, cleanup := newTestCommentsPlugin(t)
+	defer cleanup()
 
 	// New record
 	md := []backend.MetadataStream{
@@ -246,11 +243,30 @@ func TestCmdEdit(t *testing.T) {
 	// Helpers
 	comment := "random comment"
 
-	// tokenRandom := hex.EncodeToString(tokenFromTreeID(123))
+	commentEdit := comment + "more content"
+
+	parentID := uint32(0)
+
+	tokenRandom := hex.EncodeToString(tokenFromTreeID(123))
+
+	id, err := identity.New()
+	if err != nil {
+		t.Error(err)
+	}
 
 	// New comment
-	nc := newComment(t, rec.Token, comment, comments.StateUnvetted, 0)
-	ncEncoded, err := comments.EncodeNew(nc)
+	ncEncoded, err := comments.EncodeNew(
+		comments.New{
+			UserID:    uuid.New().String(),
+			State:     comments.StateUnvetted,
+			Token:     rec.Token,
+			ParentID:  parentID,
+			Comment:   comment,
+			PublicKey: id.Public.String(),
+			Signature: commentSignature(t, id, comments.StateUnvetted,
+				rec.Token, comment, parentID),
+		},
+	)
 	if err != nil {
 		t.Error(err)
 	}
@@ -258,21 +274,216 @@ func TestCmdEdit(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	fmt.Println(reply)
+	nr, err := comments.DecodeNewReply([]byte(reply))
+	if err != nil {
+		t.Error(err)
+	}
 
-	// // Setup edit comment plugin tests
-	// var tests = []struct {
-	// 	description  string
-	// 	token        string
-	// 	comment      string
-	// 	state        comments.StateT
-	// 	parentID     uint32
-	// 	badSignature bool
-	// 	badPublicKey bool
-	// 	wantErr      *backend.PluginUserError
-	// }{
-	// 	{
-	// 		"first",
-	// 	}
-	// }
+	// Setup edit comment plugin tests
+	var tests = []struct {
+		description  string
+		token        string
+		userID       string
+		parentID     uint32
+		commentID    uint32
+		comment      string
+		state        comments.StateT
+		badSignature bool
+		badPublicKey bool
+		wantErr      *backend.PluginUserError
+	}{
+		{
+			"invalid comment state",
+			rec.Token,
+			nr.Comment.UserID,
+			parentID,
+			nr.Comment.CommentID,
+			commentEdit,
+			comments.StateInvalid,
+			false,
+			false,
+			&backend.PluginUserError{
+				ErrorCode: int(comments.ErrorStatusStateInvalid),
+			},
+		},
+		{
+			"invalid token",
+			"invalid",
+			nr.Comment.UserID,
+			parentID,
+			nr.Comment.CommentID,
+			commentEdit,
+			comments.StateUnvetted,
+			false,
+			false,
+			&backend.PluginUserError{
+				ErrorCode: int(comments.ErrorStatusTokenInvalid),
+			},
+		},
+		{
+			"invalid signature",
+			rec.Token,
+			nr.Comment.UserID,
+			parentID,
+			nr.Comment.CommentID,
+			commentEdit,
+			comments.StateUnvetted,
+			true,
+			false,
+			&backend.PluginUserError{
+				ErrorCode: int(comments.ErrorStatusSignatureInvalid),
+			},
+		},
+		{
+			"invalid public key",
+			rec.Token,
+			nr.Comment.UserID,
+			parentID,
+			nr.Comment.CommentID,
+			commentEdit,
+			comments.StateUnvetted,
+			false,
+			true,
+			&backend.PluginUserError{
+				ErrorCode: int(comments.ErrorStatusPublicKeyInvalid),
+			},
+		},
+		{
+			"comment max length exceeded",
+			rec.Token,
+			nr.Comment.UserID,
+			parentID,
+			nr.Comment.CommentID,
+			newCommentMaxLengthExceeded(t),
+			comments.StateUnvetted,
+			false,
+			false,
+			&backend.PluginUserError{
+				ErrorCode: int(comments.ErrorStatusCommentTextInvalid),
+			},
+		},
+		{
+			"comment id not found",
+			rec.Token,
+			nr.Comment.UserID,
+			parentID,
+			3,
+			commentEdit,
+			comments.StateUnvetted,
+			false,
+			false,
+			&backend.PluginUserError{
+				ErrorCode: int(comments.ErrorStatusCommentNotFound),
+			},
+		},
+		{
+			"unauthorized user",
+			rec.Token,
+			uuid.New().String(),
+			parentID,
+			nr.Comment.CommentID,
+			commentEdit,
+			comments.StateUnvetted,
+			false,
+			false,
+			&backend.PluginUserError{
+				ErrorCode: int(comments.ErrorStatusUserUnauthorized),
+			},
+		},
+		{
+			"invalid parent ID",
+			rec.Token,
+			nr.Comment.UserID,
+			3,
+			nr.Comment.CommentID,
+			commentEdit,
+			comments.StateUnvetted,
+			false,
+			false,
+			&backend.PluginUserError{
+				ErrorCode: int(comments.ErrorStatusParentIDInvalid),
+			},
+		},
+		{
+			"comment did not change",
+			rec.Token,
+			nr.Comment.UserID,
+			parentID,
+			nr.Comment.CommentID,
+			comment,
+			comments.StateUnvetted,
+			false,
+			false,
+			&backend.PluginUserError{
+				ErrorCode: int(comments.ErrorStatusCommentTextInvalid),
+			},
+		},
+		{
+			"record not found",
+			tokenRandom,
+			nr.Comment.UserID,
+			parentID,
+			nr.Comment.CommentID,
+			commentEdit,
+			comments.StateUnvetted,
+			false,
+			false,
+			&backend.PluginUserError{
+				ErrorCode: int(comments.ErrorStatusRecordNotFound),
+			},
+		},
+		{
+			"success",
+			rec.Token,
+			nr.Comment.UserID,
+			parentID,
+			nr.Comment.CommentID,
+			commentEdit,
+			comments.StateUnvetted,
+			false,
+			false,
+			nil,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			// Edit Comment
+			ec := editComment(t, test.userID, test.token, test.comment,
+				test.commentID, test.parentID, test.state, id)
+			if test.badSignature {
+				ec.Signature = "bad signature"
+			}
+			if test.badPublicKey {
+				ec.PublicKey = "bad public key"
+			}
+			ecEncoded, err := comments.EncodeEdit(ec)
+			if err != nil {
+				t.Error(err)
+			}
+
+			// Execute plugin command
+			_, err = commentsPlugin.cmdEdit(string(ecEncoded))
+
+			// Parse plugin user error
+			var pluginUserError backend.PluginUserError
+			if errors.As(err, &pluginUserError) {
+				if test.wantErr == nil {
+					t.Errorf("got error %v, want nil", err)
+					return
+				}
+				if pluginUserError.ErrorCode != test.wantErr.ErrorCode {
+					t.Errorf("got error %v, want %v",
+						pluginUserError.ErrorCode,
+						test.wantErr.ErrorCode)
+				}
+				return
+			}
+
+			// Expecting nil err
+			if err != nil {
+				t.Errorf("got error %v, want nil", err)
+			}
+		})
+	}
 }
