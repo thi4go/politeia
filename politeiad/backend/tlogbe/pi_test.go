@@ -53,6 +53,11 @@ func TestCmdCommentNew(t *testing.T) {
 	tokenRandom := hex.EncodeToString(tokenFromTreeID(123))
 	parentID := uint32(0)
 
+	uid, err := identity.New()
+	if err != nil {
+		t.Error(err)
+	}
+
 	// Setup comment new pi plugin tests
 	var tests = []struct {
 		description string
@@ -67,7 +72,7 @@ func TestCmdCommentNew(t *testing.T) {
 				Token:     rec.Token,
 				ParentID:  parentID,
 				Comment:   comment,
-				PublicKey: id.Public.String(),
+				PublicKey: uid.Public.String(),
 				Signature: commentSignature(t, id, comments.StateInvalid,
 					rec.Token, comment, parentID),
 			},
@@ -83,7 +88,7 @@ func TestCmdCommentNew(t *testing.T) {
 				Token:     "invalid",
 				ParentID:  parentID,
 				Comment:   comment,
-				PublicKey: id.Public.String(),
+				PublicKey: uid.Public.String(),
 				Signature: commentSignature(t, id, comments.StateUnvetted,
 					rec.Token, comment, parentID),
 			},
@@ -99,7 +104,7 @@ func TestCmdCommentNew(t *testing.T) {
 				Token:     tokenRandom,
 				ParentID:  parentID,
 				Comment:   comment,
-				PublicKey: id.Public.String(),
+				PublicKey: uid.Public.String(),
 				Signature: commentSignature(t, id, comments.StateUnvetted,
 					tokenRandom, comment, parentID),
 			},
@@ -117,7 +122,7 @@ func TestCmdCommentNew(t *testing.T) {
 				Token:     rec.Token,
 				ParentID:  parentID,
 				Comment:   comment,
-				PublicKey: id.Public.String(),
+				PublicKey: uid.Public.String(),
 				Signature: commentSignature(t, id, comments.StateUnvetted,
 					rec.Token, comment, parentID),
 			},
