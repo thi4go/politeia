@@ -43,7 +43,7 @@ func TestCmdNew(t *testing.T) {
 	}
 	rec, err := tlogBackend.New(md, fs)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	// Helpers
@@ -54,7 +54,7 @@ func TestCmdNew(t *testing.T) {
 
 	uid, err := identity.New()
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	// Setup new comment plugin tests
@@ -237,7 +237,7 @@ func TestCmdEdit(t *testing.T) {
 	}
 	rec, err := tlogBackend.New(md, fs)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	// Helpers
@@ -250,7 +250,7 @@ func TestCmdEdit(t *testing.T) {
 
 	id, err := identity.New()
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	// New comment

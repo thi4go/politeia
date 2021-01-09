@@ -52,7 +52,7 @@ func TestCommentNew(t *testing.T) {
 	}
 	rec, err := tlogBackend.New(md, fs)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	// Helpers
@@ -62,7 +62,7 @@ func TestCommentNew(t *testing.T) {
 
 	uid, err := identity.New()
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	// Setup comment new pi plugin tests
