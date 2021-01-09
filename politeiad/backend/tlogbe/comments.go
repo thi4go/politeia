@@ -1033,6 +1033,7 @@ func (p *commentsPlugin) cmdEdit(payload string) (string, error) {
 	receipt := p.identity.SignMessage([]byte(e.Signature))
 	ca := comments.CommentAdd{
 		UserID:    e.UserID,
+		State:     e.State,
 		Token:     e.Token,
 		ParentID:  e.ParentID,
 		Comment:   e.Comment,
