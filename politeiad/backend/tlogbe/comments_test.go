@@ -9,8 +9,10 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/decred/politeia/politeiad/api/v1/identity"
 	"github.com/decred/politeia/politeiad/backend"
 	"github.com/decred/politeia/politeiad/plugins/comments"
+	"github.com/google/uuid"
 )
 
 func TestCmdNew(t *testing.T) {
@@ -33,40 +35,12 @@ func TestCmdNew(t *testing.T) {
 	comment := "random comment"
 	tokenRandom := hex.EncodeToString(tokenFromTreeID(123))
 	parentID := uint32(0)
+	invalidParentID := uint32(3)
 
-	// test case: invalid comment state
-	invalidCommentState := newComment(t, rec.Token, comment,
-		comments.StateInvalid, parentID)
-
-	// test case: invalid token
-	invalidToken := newComment(t, "invalid", comment, comments.StateUnvetted,
-		parentID)
-
-	// test case: invalid signature
-	invalidSig := newComment(t, rec.Token, comment, comments.StateUnvetted,
-		parentID)
-	invalidSig.Signature = "bad sig"
-
-	// test case: invalid public key
-	invalidPk := newComment(t, rec.Token, comment, comments.StateUnvetted,
-		parentID)
-	invalidPk.PublicKey = "bad pk"
-
-	// test case: comment max length exceeded
-	invalidLength := newComment(t, rec.Token, newCommentMaxLengthExceeded(t),
-		comments.StateUnvetted, parentID)
-
-	// test case: invalid parent ID
-	invalidParentID := newComment(t, rec.Token, comment,
-		comments.StateUnvetted, 3)
-
-	// test case: record not found
-	recordNotFound := newComment(t, tokenRandom, comment,
-		comments.StateUnvetted, parentID)
-
-	// test case: success
-	success := newComment(t, rec.Token, comment, comments.StateUnvetted,
-		parentID)
+	id, err := identity.New()
+	if err != nil {
+		t.Error(err)
+	}
 
 	// Setup new comment plugin tests
 	var tests = []struct {
@@ -76,56 +50,127 @@ func TestCmdNew(t *testing.T) {
 	}{
 		{
 			"invalid comment state",
-			invalidCommentState,
+			comments.New{
+				UserID:    uuid.New().String(),
+				State:     comments.StateInvalid,
+				Token:     rec.Token,
+				ParentID:  parentID,
+				Comment:   comment,
+				PublicKey: id.Public.String(),
+				Signature: commentSignature(t, id, comments.StateInvalid,
+					rec.Token, comment, parentID),
+			},
 			&backend.PluginUserError{
 				ErrorCode: int(comments.ErrorStatusStateInvalid),
 			},
 		},
 		{
 			"invalid token",
-			invalidToken,
+			comments.New{
+				UserID:    uuid.New().String(),
+				State:     comments.StateUnvetted,
+				Token:     "invalid",
+				ParentID:  parentID,
+				Comment:   comment,
+				PublicKey: id.Public.String(),
+				Signature: commentSignature(t, id, comments.StateUnvetted,
+					rec.Token, comment, parentID),
+			},
 			&backend.PluginUserError{
 				ErrorCode: int(comments.ErrorStatusTokenInvalid),
 			},
 		},
 		{
 			"invalid signature",
-			invalidSig,
+			comments.New{
+				UserID:    uuid.New().String(),
+				State:     comments.StateUnvetted,
+				Token:     rec.Token,
+				ParentID:  parentID,
+				Comment:   comment,
+				PublicKey: id.Public.String(),
+				Signature: "invalid",
+			},
 			&backend.PluginUserError{
 				ErrorCode: int(comments.ErrorStatusSignatureInvalid),
 			},
 		},
 		{
 			"invalid public key",
-			invalidPk,
+			comments.New{
+				UserID:    uuid.New().String(),
+				State:     comments.StateUnvetted,
+				Token:     rec.Token,
+				ParentID:  parentID,
+				Comment:   comment,
+				PublicKey: "invalid",
+				Signature: commentSignature(t, id, comments.StateUnvetted,
+					rec.Token, comment, parentID),
+			},
 			&backend.PluginUserError{
 				ErrorCode: int(comments.ErrorStatusPublicKeyInvalid),
 			},
 		},
 		{
 			"comment max length exceeded",
-			invalidLength,
+			comments.New{
+				UserID:    uuid.New().String(),
+				State:     comments.StateUnvetted,
+				Token:     rec.Token,
+				ParentID:  parentID,
+				Comment:   newCommentMaxLengthExceeded(t),
+				PublicKey: id.Public.String(),
+				Signature: commentSignature(t, id, comments.StateUnvetted,
+					rec.Token, newCommentMaxLengthExceeded(t), parentID),
+			},
 			&backend.PluginUserError{
 				ErrorCode: int(comments.ErrorStatusCommentTextInvalid),
 			},
 		},
 		{
 			"invalid parent ID",
-			invalidParentID,
+			comments.New{
+				UserID:    uuid.New().String(),
+				State:     comments.StateUnvetted,
+				Token:     rec.Token,
+				ParentID:  invalidParentID,
+				Comment:   comment,
+				PublicKey: id.Public.String(),
+				Signature: commentSignature(t, id, comments.StateUnvetted,
+					rec.Token, comment, invalidParentID),
+			},
 			&backend.PluginUserError{
 				ErrorCode: int(comments.ErrorStatusParentIDInvalid),
 			},
 		},
 		{
 			"record not found",
-			recordNotFound,
+			comments.New{
+				UserID:    uuid.New().String(),
+				State:     comments.StateUnvetted,
+				Token:     tokenRandom,
+				ParentID:  parentID,
+				Comment:   comment,
+				PublicKey: id.Public.String(),
+				Signature: commentSignature(t, id, comments.StateUnvetted,
+					tokenRandom, comment, parentID),
+			},
 			&backend.PluginUserError{
 				ErrorCode: int(comments.ErrorStatusRecordNotFound),
 			},
 		},
 		{
 			"success",
-			success,
+			comments.New{
+				UserID:    uuid.New().String(),
+				State:     comments.StateUnvetted,
+				Token:     rec.Token,
+				ParentID:  parentID,
+				Comment:   comment,
+				PublicKey: id.Public.String(),
+				Signature: commentSignature(t, id, comments.StateUnvetted,
+					rec.Token, comment, parentID),
+			},
 			nil,
 		},
 	}

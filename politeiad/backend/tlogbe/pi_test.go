@@ -13,6 +13,7 @@ import (
 	"github.com/decred/politeia/politeiad/backend"
 	"github.com/decred/politeia/politeiad/plugins/comments"
 	"github.com/decred/politeia/politeiad/plugins/pi"
+	"github.com/google/uuid"
 )
 
 func TestCmdCommentNew(t *testing.T) {
@@ -52,22 +53,6 @@ func TestCmdCommentNew(t *testing.T) {
 	tokenRandom := hex.EncodeToString(tokenFromTreeID(123))
 	parentID := uint32(0)
 
-	// test case: invalid comment state
-	invalidCommentState := newComment(t, rec.Token, comment,
-		comments.StateInvalid, parentID)
-
-	// test case: invalid token
-	invalidToken := newComment(t, "invalid", comment, comments.StateUnvetted,
-		parentID)
-
-	// test case: record not found
-	recordNotFound := newComment(t, tokenRandom, comment,
-		comments.StateUnvetted, parentID)
-
-	// test case: success
-	success := newComment(t, rec.Token, comment, comments.StateUnvetted,
-		parentID)
-
 	// Setup comment new pi plugin tests
 	var tests = []struct {
 		description string
@@ -76,21 +61,48 @@ func TestCmdCommentNew(t *testing.T) {
 	}{
 		{
 			"invalid comment state",
-			invalidCommentState,
+			comments.New{
+				UserID:    uuid.New().String(),
+				State:     comments.StateInvalid,
+				Token:     rec.Token,
+				ParentID:  parentID,
+				Comment:   comment,
+				PublicKey: id.Public.String(),
+				Signature: commentSignature(t, id, comments.StateInvalid,
+					rec.Token, comment, parentID),
+			},
 			&backend.PluginUserError{
 				ErrorCode: int(pi.ErrorStatusPropStateInvalid),
 			},
 		},
 		{
 			"invalid token",
-			invalidToken,
+			comments.New{
+				UserID:    uuid.New().String(),
+				State:     comments.StateUnvetted,
+				Token:     "invalid",
+				ParentID:  parentID,
+				Comment:   comment,
+				PublicKey: id.Public.String(),
+				Signature: commentSignature(t, id, comments.StateUnvetted,
+					rec.Token, comment, parentID),
+			},
 			&backend.PluginUserError{
 				ErrorCode: int(pi.ErrorStatusPropTokenInvalid),
 			},
 		},
 		{
 			"record not found",
-			recordNotFound,
+			comments.New{
+				UserID:    uuid.New().String(),
+				State:     comments.StateUnvetted,
+				Token:     tokenRandom,
+				ParentID:  parentID,
+				Comment:   comment,
+				PublicKey: id.Public.String(),
+				Signature: commentSignature(t, id, comments.StateUnvetted,
+					tokenRandom, comment, parentID),
+			},
 			&backend.PluginUserError{
 				ErrorCode: int(pi.ErrorStatusPropNotFound),
 			},
@@ -99,7 +111,16 @@ func TestCmdCommentNew(t *testing.T) {
 		// refactor
 		{
 			"success",
-			success,
+			comments.New{
+				UserID:    uuid.New().String(),
+				State:     comments.StateUnvetted,
+				Token:     rec.Token,
+				ParentID:  parentID,
+				Comment:   comment,
+				PublicKey: id.Public.String(),
+				Signature: commentSignature(t, id, comments.StateUnvetted,
+					rec.Token, comment, parentID),
+			},
 			nil,
 		},
 	}

@@ -30,7 +30,6 @@ import (
 	"github.com/google/trillian/crypto/keys"
 	"github.com/google/trillian/crypto/keys/der"
 	"github.com/google/trillian/crypto/keyspb"
-	"github.com/google/uuid"
 	"github.com/marcopeereboom/sbox"
 )
 
@@ -113,29 +112,14 @@ func newBackendMetadataStream(t *testing.T, id uint64, payload string) backend.M
 	}
 }
 
-func newComment(t *testing.T, token, comment string, state comments.StateT, parentID uint32) comments.New {
+func commentSignature(t *testing.T, id *identity.FullIdentity, state comments.StateT, token, comment string, parentID uint32) string {
 	t.Helper()
-
-	// Create identity
-	id, err := identity.New()
-	if err != nil {
-		t.Error(err)
-	}
 
 	// Create signature
 	msg := strconv.Itoa(int(state)) + token +
 		strconv.FormatInt(int64(parentID), 10) + comment
 	b := id.SignMessage([]byte(msg))
-
-	return comments.New{
-		UserID:    uuid.New().String(),
-		State:     state,
-		Token:     token,
-		ParentID:  parentID,
-		Comment:   comment,
-		PublicKey: id.Public.String(),
-		Signature: hex.EncodeToString(b[:]),
-	}
+	return hex.EncodeToString(b[:])
 }
 
 func newCommentMaxLengthExceeded(t *testing.T) string {
