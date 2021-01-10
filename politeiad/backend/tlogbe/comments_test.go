@@ -267,15 +267,15 @@ func TestCmdEdit(t *testing.T) {
 		},
 	)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	reply, err := commentsPlugin.cmdNew(string(ncEncoded))
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	nr, err := comments.DecodeNewReply([]byte(reply))
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	// Setup edit comment plugin tests
