@@ -359,10 +359,10 @@ func TestCmdEdit(t *testing.T) {
 				Token:     rec.Token,
 				ParentID:  nr.Comment.ParentID,
 				CommentID: nr.Comment.CommentID,
-				Comment:   newCommentMaxLengthExceeded(t),
+				Comment:   commentMaxLengthExceeded(t),
 				PublicKey: id.Public.String(),
 				Signature: commentSignature(t, id, nr.Comment.State, rec.Token,
-					newCommentMaxLengthExceeded(t), nr.Comment.ParentID),
+					commentMaxLengthExceeded(t), nr.Comment.ParentID),
 			},
 			&backend.PluginUserError{
 				ErrorCode: int(comments.ErrorStatusCommentTextInvalid),

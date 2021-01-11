@@ -227,6 +227,49 @@ func newTestTlogBackend(t *testing.T) (*tlogBackend, func()) {
 	}
 }
 
+func newTestCommentsPlugin(t *testing.T) (*commentsPlugin, *tlogBackend, func()) {
+	t.Helper()
+
+	tlogBackend, cleanup := newTestTlogBackend(t)
+
+	id, err := identity.New()
+	if err != nil {
+		t.Fatalf("identity New: %v", err)
+	}
+
+	settings := []backend.PluginSetting{{
+		Key:   pluginSettingDataDir,
+		Value: tlogBackend.dataDir,
+	}}
+
+	commentsPlugin, err := newCommentsPlugin(tlogBackend,
+		newBackendClient(tlogBackend), settings, id)
+	if err != nil {
+		t.Fatalf("newCommentsPlugin: %v", err)
+	}
+
+	return commentsPlugin, tlogBackend, cleanup
+}
+
+func newTestPiPlugin(t *testing.T) (*piPlugin, *tlogBackend, func()) {
+	t.Helper()
+
+	tlogBackend, cleanup := newTestTlogBackend(t)
+
+	settings := []backend.PluginSetting{{
+		Key:   pluginSettingDataDir,
+		Value: tlogBackend.dataDir,
+	}}
+
+	piPlugin, err := newPiPlugin(tlogBackend, newBackendClient(tlogBackend),
+		settings, tlogBackend.activeNetParams)
+	if err != nil {
+		t.Fatalf("newPiPlugin: %v", err)
+	}
+
+	return piPlugin, tlogBackend, cleanup
+}
+
 // recordContentTests defines the type used to describe the content
 // verification error tests.
 type recordContentTest struct {
