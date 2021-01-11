@@ -169,14 +169,14 @@ func TestCommentDel(t *testing.T) {
 	defer cleanup()
 
 	// Register comments plugin
-	settings := []backend.PluginSetting{{
-		Key:   pluginSettingDataDir,
-		Value: tlogBackend.dataDir,
-	}}
 	id, err := identity.New()
 	if err != nil {
 		t.Fatal(err)
 	}
+	settings := []backend.PluginSetting{{
+		Key:   pluginSettingDataDir,
+		Value: tlogBackend.dataDir,
+	}}
 	tlogBackend.RegisterPlugin(backend.Plugin{
 		ID:       comments.ID,
 		Version:  comments.Version,
