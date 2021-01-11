@@ -1048,12 +1048,6 @@ func (p *commentsPlugin) cmdEdit(payload string) (string, error) {
 	// Save comment
 	merkle, err := p.commentAddSave(ca)
 	if err != nil {
-		if errors.Is(err, errRecordNotFound) {
-			return "", backend.PluginUserError{
-				PluginID:  comments.ID,
-				ErrorCode: int(comments.ErrorStatusRecordNotFound),
-			}
-		}
 		return "", fmt.Errorf("commentSave: %v", err)
 	}
 
