@@ -503,3 +503,186 @@ func TestCmdEdit(t *testing.T) {
 		})
 	}
 }
+
+func TestCmdDel(t *testing.T) {
+	commentsPlugin, tlogBackend, cleanup := newTestCommentsPlugin(t)
+	defer cleanup()
+
+	// New record
+	md := []backend.MetadataStream{
+		newBackendMetadataStream(t, 1, ""),
+	}
+	fs := []backend.File{
+		newBackendFile(t, "index.md"),
+	}
+	rec, err := tlogBackend.New(md, fs)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Helpers
+	comment := "random comment"
+	reason := "random reason"
+	parentID := uint32(0)
+	tokenRandom := hex.EncodeToString(tokenFromTreeID(123))
+	id, err := identity.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// New comment
+	ncEncoded, err := comments.EncodeNew(
+		comments.New{
+			UserID:    uuid.New().String(),
+			State:     comments.StateUnvetted,
+			Token:     rec.Token,
+			ParentID:  parentID,
+			Comment:   comment,
+			PublicKey: id.Public.String(),
+			Signature: commentSignature(t, id, comments.StateUnvetted,
+				rec.Token, comment, parentID),
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reply, err := commentsPlugin.cmdNew(string(ncEncoded))
+	if err != nil {
+		t.Fatal(err)
+	}
+	nr, err := comments.DecodeNewReply([]byte(reply))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Setup del comment plugin tests
+	var tests = []struct {
+		description string
+		payload     comments.Del
+		wantErr     *backend.PluginUserError
+	}{
+		{
+			"invalid comment state",
+			comments.Del{
+				State:     comments.StateInvalid,
+				Token:     rec.Token,
+				CommentID: nr.Comment.CommentID,
+				Reason:    reason,
+				PublicKey: id.Public.String(),
+				Signature: commentSignature(t, id, comments.StateInvalid,
+					rec.Token, reason, nr.Comment.CommentID),
+			},
+			&backend.PluginUserError{
+				ErrorCode: int(comments.ErrorStatusStateInvalid),
+			},
+		},
+		{
+			"invalid token",
+			comments.Del{
+				State:     comments.StateUnvetted,
+				Token:     "invalid",
+				CommentID: nr.Comment.CommentID,
+				Reason:    reason,
+				PublicKey: id.Public.String(),
+				Signature: commentSignature(t, id, comments.StateUnvetted,
+					"invalid", reason, nr.Comment.CommentID),
+			},
+			&backend.PluginUserError{
+				ErrorCode: int(comments.ErrorStatusTokenInvalid),
+			},
+		},
+		{
+			"invalid signature",
+			comments.Del{
+				State:     comments.StateUnvetted,
+				Token:     rec.Token,
+				CommentID: nr.Comment.CommentID,
+				Reason:    reason,
+				PublicKey: id.Public.String(),
+				Signature: "invalid",
+			},
+			&backend.PluginUserError{
+				ErrorCode: int(comments.ErrorStatusSignatureInvalid),
+			},
+		},
+		{
+			"invalid public key",
+			comments.Del{
+				State:     comments.StateUnvetted,
+				Token:     rec.Token,
+				CommentID: nr.Comment.CommentID,
+				Reason:    reason,
+				PublicKey: "invalid",
+				Signature: commentSignature(t, id, comments.StateUnvetted,
+					rec.Token, reason, nr.Comment.CommentID),
+			},
+			&backend.PluginUserError{
+				ErrorCode: int(comments.ErrorStatusPublicKeyInvalid),
+			},
+		},
+		{
+			"record not found",
+			comments.Del{
+				State:     comments.StateUnvetted,
+				Token:     tokenRandom,
+				CommentID: nr.Comment.CommentID,
+				Reason:    reason,
+				PublicKey: id.Public.String(),
+				Signature: commentSignature(t, id, comments.StateUnvetted,
+					tokenRandom, reason, nr.Comment.CommentID),
+			},
+			&backend.PluginUserError{
+				ErrorCode: int(comments.ErrorStatusRecordNotFound),
+			},
+		},
+		{
+			"comment id not found",
+			comments.Del{
+				State:     comments.StateUnvetted,
+				Token:     rec.Token,
+				CommentID: 3,
+				Reason:    reason,
+				PublicKey: id.Public.String(),
+				Signature: commentSignature(t, id, comments.StateUnvetted,
+					rec.Token, reason, 3),
+			},
+			&backend.PluginUserError{
+				ErrorCode: int(comments.ErrorStatusCommentNotFound),
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			// Del Comment
+			dcEncoded, err := comments.EncodeDel(test.payload)
+			if err != nil {
+				t.Error(err)
+			}
+
+			// Execute plugin command
+			_, err = commentsPlugin.cmdDel(string(dcEncoded))
+
+			// Parse plugin user error
+			var pluginUserError backend.PluginUserError
+			if errors.As(err, &pluginUserError) {
+				if test.wantErr == nil {
+					t.Errorf("got error %v, want nil", err)
+					return
+				}
+				if pluginUserError.ErrorCode != test.wantErr.ErrorCode {
+					t.Errorf("got error %v, want %v",
+						pluginUserError.ErrorCode,
+						test.wantErr.ErrorCode)
+				}
+				return
+			}
+
+			// Expecting nil err
+			if err != nil {
+				t.Errorf("got error %v, want nil", err)
+			}
+		})
+	}
+
+}
