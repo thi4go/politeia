@@ -16,19 +16,26 @@ import (
 	"github.com/google/uuid"
 )
 
-func TestCmdCommentNew(t *testing.T) {
-	piPlugin, tlogBackend, cleanup := newTestPiPlugin(t)
+func TestCommentNew(t *testing.T) {
+	tlogBackend, cleanup := newTestTlogBackend(t)
 	defer cleanup()
 
-	// Register comments plugin
+	id, err := identity.New()
+	if err != nil {
+		t.Fatal(err)
+	}
 	settings := []backend.PluginSetting{{
 		Key:   pluginSettingDataDir,
 		Value: tlogBackend.dataDir,
 	}}
-	id, err := identity.New()
+
+	piPlugin, err := newPiPlugin(tlogBackend, newBackendClient(tlogBackend),
+		settings, tlogBackend.activeNetParams)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
+
+	// Register comments plugin
 	tlogBackend.RegisterPlugin(backend.Plugin{
 		ID:       comments.ID,
 		Version:  comments.Version,

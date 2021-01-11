@@ -16,8 +16,23 @@ import (
 )
 
 func TestCmdNew(t *testing.T) {
-	commentsPlugin, tlogBackend, cleanup := newTestCommentsPlugin(t)
+	tlogBackend, cleanup := newTestTlogBackend(t)
 	defer cleanup()
+
+	id, err := identity.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings := []backend.PluginSetting{{
+		Key:   pluginSettingDataDir,
+		Value: tlogBackend.dataDir,
+	}}
+
+	commentsPlugin, err := newCommentsPlugin(tlogBackend,
+		newBackendClient(tlogBackend), settings, id)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// New record
 	md := []backend.MetadataStream{
@@ -37,7 +52,7 @@ func TestCmdNew(t *testing.T) {
 	parentID := uint32(0)
 	invalidParentID := uint32(3)
 
-	id, err := identity.New()
+	uid, err := identity.New()
 	if err != nil {
 		t.Error(err)
 	}
@@ -56,8 +71,8 @@ func TestCmdNew(t *testing.T) {
 				Token:     rec.Token,
 				ParentID:  parentID,
 				Comment:   comment,
-				PublicKey: id.Public.String(),
-				Signature: commentSignature(t, id, comments.StateInvalid,
+				PublicKey: uid.Public.String(),
+				Signature: commentSignature(t, uid, comments.StateInvalid,
 					rec.Token, comment, parentID),
 			},
 			&backend.PluginUserError{
@@ -72,8 +87,8 @@ func TestCmdNew(t *testing.T) {
 				Token:     "invalid",
 				ParentID:  parentID,
 				Comment:   comment,
-				PublicKey: id.Public.String(),
-				Signature: commentSignature(t, id, comments.StateUnvetted,
+				PublicKey: uid.Public.String(),
+				Signature: commentSignature(t, uid, comments.StateUnvetted,
 					rec.Token, comment, parentID),
 			},
 			&backend.PluginUserError{
@@ -88,7 +103,7 @@ func TestCmdNew(t *testing.T) {
 				Token:     rec.Token,
 				ParentID:  parentID,
 				Comment:   comment,
-				PublicKey: id.Public.String(),
+				PublicKey: uid.Public.String(),
 				Signature: "invalid",
 			},
 			&backend.PluginUserError{
@@ -104,7 +119,7 @@ func TestCmdNew(t *testing.T) {
 				ParentID:  parentID,
 				Comment:   comment,
 				PublicKey: "invalid",
-				Signature: commentSignature(t, id, comments.StateUnvetted,
+				Signature: commentSignature(t, uid, comments.StateUnvetted,
 					rec.Token, comment, parentID),
 			},
 			&backend.PluginUserError{
@@ -118,10 +133,10 @@ func TestCmdNew(t *testing.T) {
 				State:     comments.StateUnvetted,
 				Token:     rec.Token,
 				ParentID:  parentID,
-				Comment:   newCommentMaxLengthExceeded(t),
-				PublicKey: id.Public.String(),
-				Signature: commentSignature(t, id, comments.StateUnvetted,
-					rec.Token, newCommentMaxLengthExceeded(t), parentID),
+				Comment:   commentMaxLengthExceeded(t),
+				PublicKey: uid.Public.String(),
+				Signature: commentSignature(t, uid, comments.StateUnvetted,
+					rec.Token, commentMaxLengthExceeded(t), parentID),
 			},
 			&backend.PluginUserError{
 				ErrorCode: int(comments.ErrorStatusCommentTextInvalid),
@@ -135,8 +150,8 @@ func TestCmdNew(t *testing.T) {
 				Token:     rec.Token,
 				ParentID:  invalidParentID,
 				Comment:   comment,
-				PublicKey: id.Public.String(),
-				Signature: commentSignature(t, id, comments.StateUnvetted,
+				PublicKey: uid.Public.String(),
+				Signature: commentSignature(t, uid, comments.StateUnvetted,
 					rec.Token, comment, invalidParentID),
 			},
 			&backend.PluginUserError{
@@ -151,8 +166,8 @@ func TestCmdNew(t *testing.T) {
 				Token:     tokenRandom,
 				ParentID:  parentID,
 				Comment:   comment,
-				PublicKey: id.Public.String(),
-				Signature: commentSignature(t, id, comments.StateUnvetted,
+				PublicKey: uid.Public.String(),
+				Signature: commentSignature(t, uid, comments.StateUnvetted,
 					tokenRandom, comment, parentID),
 			},
 			&backend.PluginUserError{
@@ -167,8 +182,8 @@ func TestCmdNew(t *testing.T) {
 				Token:     rec.Token,
 				ParentID:  parentID,
 				Comment:   comment,
-				PublicKey: id.Public.String(),
-				Signature: commentSignature(t, id, comments.StateUnvetted,
+				PublicKey: uid.Public.String(),
+				Signature: commentSignature(t, uid, comments.StateUnvetted,
 					rec.Token, comment, parentID),
 			},
 			nil,
@@ -198,7 +213,6 @@ func TestCmdNew(t *testing.T) {
 						pluginUserError.ErrorCode,
 						test.wantErr.ErrorCode)
 				}
-
 				return
 			}
 
