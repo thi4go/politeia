@@ -60,13 +60,13 @@ func newBackendFileJPEG(t *testing.T) backend.File {
 
 	err := jpeg.Encode(b, img, &jpeg.Options{})
 	if err != nil {
-		t.Fatalf("%v", err)
+		t.Fatal(err)
 	}
 
 	// Generate a random name
 	r, err := util.Random(8)
 	if err != nil {
-		t.Fatalf("%v", err)
+		t.Fatal(err)
 	}
 
 	return backend.File{
@@ -85,13 +85,13 @@ func newBackendFilePNG(t *testing.T) backend.File {
 
 	err := png.Encode(b, img)
 	if err != nil {
-		t.Fatalf("%v", err)
+		t.Fatal(err)
 	}
 
 	// Generate a random name
 	r, err := util.Random(8)
 	if err != nil {
-		t.Fatalf("%v", err)
+		t.Fatal(err)
 	}
 
 	return backend.File{
