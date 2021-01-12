@@ -61,7 +61,7 @@ func TestCommentNew(t *testing.T) {
 	var tests = []struct {
 		description string
 		payload     comments.New
-		wantErr     *backend.PluginUserError
+		wantErr     error
 	}{
 		{
 			"invalid comment state",
@@ -75,7 +75,7 @@ func TestCommentNew(t *testing.T) {
 				Signature: commentSignature(t, uid, comments.StateInvalid,
 					rec.Token, comment, parentID),
 			},
-			&backend.PluginUserError{
+			backend.PluginUserError{
 				ErrorCode: int(pi.ErrorStatusPropStateInvalid),
 			},
 		},
@@ -91,7 +91,7 @@ func TestCommentNew(t *testing.T) {
 				Signature: commentSignature(t, uid, comments.StateUnvetted,
 					rec.Token, comment, parentID),
 			},
-			&backend.PluginUserError{
+			backend.PluginUserError{
 				ErrorCode: int(pi.ErrorStatusPropTokenInvalid),
 			},
 		},
@@ -107,7 +107,7 @@ func TestCommentNew(t *testing.T) {
 				Signature: commentSignature(t, uid, comments.StateUnvetted,
 					tokenRandom, comment, parentID),
 			},
-			&backend.PluginUserError{
+			backend.PluginUserError{
 				ErrorCode: int(pi.ErrorStatusPropNotFound),
 			},
 		},
@@ -147,17 +147,18 @@ func TestCommentNew(t *testing.T) {
 					t.Errorf("got error %v, want nil2", err)
 					return
 				}
-				if pluginUserError.ErrorCode != test.wantErr.ErrorCode {
+				wantErr := test.wantErr.(backend.PluginUserError)
+				if pluginUserError.ErrorCode != wantErr.ErrorCode {
 					t.Errorf("got error %v, want %v",
 						pluginUserError.ErrorCode,
-						test.wantErr.ErrorCode)
+						wantErr.ErrorCode)
 				}
 				return
 			}
 
-			// Expecting nil err
-			if err != nil {
-				t.Errorf("got error %v, want nil", err)
+			// Expectations not met
+			if err != test.wantErr {
+				t.Errorf("got error %v, want %v", err, test.wantErr)
 			}
 		})
 	}
@@ -234,7 +235,7 @@ func TestCommentDel(t *testing.T) {
 	var tests = []struct {
 		description string
 		payload     comments.Del
-		wantErr     *backend.PluginUserError
+		wantErr     error
 	}{
 		{
 			"invalid comment state",
@@ -247,7 +248,7 @@ func TestCommentDel(t *testing.T) {
 				Signature: commentSignature(t, uid, comments.StateInvalid,
 					rec.Token, reason, nr.Comment.CommentID),
 			},
-			&backend.PluginUserError{
+			backend.PluginUserError{
 				ErrorCode: int(pi.ErrorStatusPropStateInvalid),
 			},
 		},
@@ -262,7 +263,7 @@ func TestCommentDel(t *testing.T) {
 				Signature: commentSignature(t, uid, comments.StateUnvetted,
 					"invalid", reason, nr.Comment.CommentID),
 			},
-			&backend.PluginUserError{
+			backend.PluginUserError{
 				ErrorCode: int(pi.ErrorStatusPropTokenInvalid),
 			},
 		},
@@ -277,7 +278,7 @@ func TestCommentDel(t *testing.T) {
 				Signature: commentSignature(t, uid, comments.StateUnvetted,
 					tokenRandom, reason, nr.Comment.CommentID),
 			},
-			&backend.PluginUserError{
+			backend.PluginUserError{
 				ErrorCode: int(pi.ErrorStatusPropNotFound),
 			},
 		},
@@ -314,17 +315,18 @@ func TestCommentDel(t *testing.T) {
 					t.Errorf("got error %v, want nil", err)
 					return
 				}
-				if pluginUserError.ErrorCode != test.wantErr.ErrorCode {
+				wantErr := test.wantErr.(backend.PluginUserError)
+				if pluginUserError.ErrorCode != wantErr.ErrorCode {
 					t.Errorf("got error %v, want %v",
 						pluginUserError.ErrorCode,
-						test.wantErr.ErrorCode)
+						wantErr.ErrorCode)
 				}
 				return
 			}
 
-			// Expecting nil err
-			if err != nil {
-				t.Errorf("got error %v, want nil", err)
+			// Expectations not met
+			if err != test.wantErr {
+				t.Errorf("got error %v, want %v", err, test.wantErr)
 			}
 		})
 	}
