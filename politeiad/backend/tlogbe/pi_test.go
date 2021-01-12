@@ -178,7 +178,6 @@ func TestCommentDel(t *testing.T) {
 	}}
 	tlogBackend.RegisterPlugin(backend.Plugin{
 		ID:       comments.ID,
-		Version:  comments.Version,
 		Settings: settings,
 		Identity: id,
 	})
