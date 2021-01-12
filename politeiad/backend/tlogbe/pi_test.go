@@ -152,7 +152,6 @@ func TestCommentNew(t *testing.T) {
 						pluginUserError.ErrorCode,
 						test.wantErr.ErrorCode)
 				}
-
 				return
 			}
 
@@ -321,7 +320,6 @@ func TestCommentDel(t *testing.T) {
 						pluginUserError.ErrorCode,
 						test.wantErr.ErrorCode)
 				}
-
 				return
 			}
 
