@@ -184,13 +184,6 @@ func TestCommentDel(t *testing.T) {
 		Identity: id,
 	})
 
-	// New comment plugin test instance
-	commentsPlugin, err := newCommentsPlugin(tlogBackend,
-		newBackendClient(tlogBackend), settings, id)
-	if err != nil {
-		t.Fatalf("newCommentsPlugin: %v", err)
-	}
-
 	// New record
 	md := []backend.MetadataStream{
 		newBackendMetadataStream(t, 1, ""),
@@ -206,7 +199,7 @@ func TestCommentDel(t *testing.T) {
 	// Helpers
 	comment := "random comment"
 	reason := "random reason"
-	// tokenRandom := hex.EncodeToString(tokenFromTreeID(123))
+	tokenRandom := hex.EncodeToString(tokenFromTreeID(123))
 	parentID := uint32(0)
 
 	uid, err := identity.New()
@@ -222,15 +215,15 @@ func TestCommentDel(t *testing.T) {
 			Token:     rec.Token,
 			ParentID:  parentID,
 			Comment:   comment,
-			PublicKey: id.Public.String(),
-			Signature: commentSignature(t, id, comments.StateUnvetted,
+			PublicKey: uid.Public.String(),
+			Signature: commentSignature(t, uid, comments.StateUnvetted,
 				rec.Token, comment, parentID),
 		},
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
-	reply, err := commentsPlugin.cmdNew(string(ncEncoded))
+	reply, err := piPlugin.commentNew(string(ncEncoded))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -259,6 +252,49 @@ func TestCommentDel(t *testing.T) {
 			&backend.PluginUserError{
 				ErrorCode: int(pi.ErrorStatusPropStateInvalid),
 			},
+		},
+		{
+			"invalid token",
+			comments.Del{
+				State:     comments.StateUnvetted,
+				Token:     "invalid",
+				CommentID: nr.Comment.CommentID,
+				Reason:    reason,
+				PublicKey: uid.Public.String(),
+				Signature: commentSignature(t, uid, comments.StateUnvetted,
+					"invalid", reason, nr.Comment.CommentID),
+			},
+			&backend.PluginUserError{
+				ErrorCode: int(pi.ErrorStatusPropTokenInvalid),
+			},
+		},
+		{
+			"proposal not found",
+			comments.Del{
+				State:     comments.StateUnvetted,
+				Token:     tokenRandom,
+				CommentID: nr.Comment.CommentID,
+				Reason:    reason,
+				PublicKey: uid.Public.String(),
+				Signature: commentSignature(t, uid, comments.StateUnvetted,
+					tokenRandom, reason, nr.Comment.CommentID),
+			},
+			&backend.PluginUserError{
+				ErrorCode: int(pi.ErrorStatusPropNotFound),
+			},
+		},
+		{
+			"success",
+			comments.Del{
+				State:     comments.StateUnvetted,
+				Token:     rec.Token,
+				CommentID: nr.Comment.CommentID,
+				Reason:    reason,
+				PublicKey: uid.Public.String(),
+				Signature: commentSignature(t, uid, comments.StateUnvetted,
+					rec.Token, reason, nr.Comment.CommentID),
+			},
+			nil,
 		},
 	}
 
