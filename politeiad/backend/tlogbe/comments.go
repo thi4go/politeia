@@ -1308,7 +1308,7 @@ func (p *commentsPlugin) cmdVote(payload string) (string, error) {
 	default:
 		return "", backend.PluginUserError{
 			PluginID:  comments.ID,
-			ErrorCode: int(comments.ErrorStatusTokenInvalid),
+			ErrorCode: int(comments.ErrorStatusStateInvalid),
 		}
 	}
 
@@ -1377,12 +1377,6 @@ func (p *commentsPlugin) cmdVote(payload string) (string, error) {
 	// Verify user is not voting on their own comment
 	cs, err := p.comments(v.State, token, *idx, []uint32{v.CommentID})
 	if err != nil {
-		if errors.Is(err, errRecordNotFound) {
-			return "", backend.PluginUserError{
-				PluginID:  comments.ID,
-				ErrorCode: int(comments.ErrorStatusRecordNotFound),
-			}
-		}
 		return "", fmt.Errorf("comments %v: %v", v.CommentID, err)
 	}
 	c, ok := cs[v.CommentID]

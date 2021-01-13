@@ -12,7 +12,9 @@ import (
 	"github.com/decred/politeia/politeiad/api/v1/identity"
 	"github.com/decred/politeia/politeiad/backend"
 	"github.com/decred/politeia/politeiad/plugins/comments"
+	"github.com/decred/politeia/politeiad/plugins/dcrdata"
 	"github.com/decred/politeia/politeiad/plugins/pi"
+	"github.com/decred/politeia/politeiad/plugins/ticketvote"
 	"github.com/google/uuid"
 )
 
@@ -299,7 +301,7 @@ func TestCommentDel(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
-			// New Comment
+			// Del Comment
 			dcEncoded, err := comments.EncodeDel(test.payload)
 			if err != nil {
 				t.Error(err)
@@ -330,5 +332,221 @@ func TestCommentDel(t *testing.T) {
 			}
 		})
 	}
+}
 
+func TestCommentVote(t *testing.T) {
+	piPlugin, tlogBackend, cleanup := newTestPiPlugin(t)
+	defer cleanup()
+
+	// Register comments plugin
+	id, err := identity.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings := []backend.PluginSetting{{
+		Key:   pluginSettingDataDir,
+		Value: tlogBackend.dataDir,
+	}}
+	tlogBackend.RegisterPlugin(backend.Plugin{
+		ID:       comments.ID,
+		Settings: settings,
+		Identity: id,
+	})
+
+	// Register ticketvote plugin
+	tlogBackend.RegisterPlugin(backend.Plugin{
+		ID:       ticketvote.ID,
+		Settings: settings,
+		Identity: id,
+	})
+
+	// Register dcrdata plugin
+	tlogBackend.RegisterPlugin(backend.Plugin{
+		ID:       dcrdata.ID,
+		Settings: settings,
+		Identity: id,
+	})
+
+	// New vetted record
+	md := []backend.MetadataStream{
+		newBackendMetadataStream(t, 1, ""),
+	}
+	fs := []backend.File{
+		newBackendFile(t, "index.md"),
+	}
+	rec, err := tlogBackend.New(md, fs)
+	if err != nil {
+		t.Fatal(err)
+	}
+	token, err := tokenDecode(rec.Token)
+	if err != nil {
+		t.Fatal(err)
+	}
+	md = append(md, newBackendMetadataStream(t, 2, ""))
+	_, err = tlogBackend.SetUnvettedStatus(token, backend.MDStatusVetted,
+		md, []backend.MetadataStream{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// New unvetted record
+	recUnvetted, err := tlogBackend.New(md, fs)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Helpers
+	comment := "random comment"
+	tokenRandom := hex.EncodeToString(tokenFromTreeID(123))
+	userID := uuid.New().String()
+
+	uid, err := identity.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// New comment
+	ncEncoded, err := comments.EncodeNew(
+		comments.New{
+			UserID:    uuid.New().String(),
+			State:     comments.StateVetted,
+			Token:     rec.Token,
+			ParentID:  uint32(0),
+			Comment:   comment,
+			PublicKey: uid.Public.String(),
+			Signature: commentSignature(t, uid, comments.StateVetted,
+				rec.Token, comment, uint32(0)),
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reply, err := piPlugin.commentNew(string(ncEncoded))
+	if err != nil {
+		t.Fatal(err)
+	}
+	nr, err := comments.DecodeNewReply([]byte(reply))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Setup comment del pi plugin tests
+	var tests = []struct {
+		description string
+		payload     comments.Vote
+		wantErr     error
+	}{
+		{
+			"invalid comment state",
+			comments.Vote{
+				UserID:    userID,
+				State:     comments.StateInvalid,
+				Token:     rec.Token,
+				CommentID: nr.Comment.CommentID,
+				Vote:      comments.VoteUpvote,
+				PublicKey: uid.Public.String(),
+				Signature: commentVoteSignature(t, uid, comments.StateInvalid,
+					rec.Token, nr.Comment.CommentID, comments.VoteUpvote),
+			},
+			backend.PluginUserError{
+				ErrorCode: int(pi.ErrorStatusPropStateInvalid),
+			},
+		},
+		{
+			"invalid token",
+			comments.Vote{
+				UserID:    userID,
+				State:     comments.StateVetted,
+				Token:     "invalid",
+				CommentID: nr.Comment.CommentID,
+				Vote:      comments.VoteUpvote,
+				PublicKey: uid.Public.String(),
+				Signature: commentVoteSignature(t, uid, comments.StateVetted,
+					"invalid", nr.Comment.CommentID, comments.VoteUpvote),
+			},
+			backend.PluginUserError{
+				ErrorCode: int(pi.ErrorStatusPropTokenInvalid),
+			},
+		},
+		{
+			"proposal not found",
+			comments.Vote{
+				UserID:    userID,
+				State:     comments.StateVetted,
+				Token:     tokenRandom,
+				CommentID: nr.Comment.CommentID,
+				Vote:      comments.VoteUpvote,
+				PublicKey: uid.Public.String(),
+				Signature: commentVoteSignature(t, uid, comments.StateVetted,
+					tokenRandom, nr.Comment.CommentID, comments.VoteUpvote),
+			},
+			backend.PluginUserError{
+				ErrorCode: int(pi.ErrorStatusPropNotFound),
+			},
+		},
+		{
+			"invalid proposal status",
+			comments.Vote{
+				UserID:    userID,
+				State:     comments.StateUnvetted,
+				Token:     recUnvetted.Token,
+				CommentID: nr.Comment.CommentID,
+				Vote:      comments.VoteUpvote,
+				PublicKey: uid.Public.String(),
+				Signature: commentVoteSignature(t, uid, comments.StateUnvetted,
+					recUnvetted.Token, nr.Comment.CommentID, comments.VoteUpvote),
+			},
+			backend.PluginUserError{
+				ErrorCode: int(pi.ErrorStatusPropStatusInvalid),
+			},
+		},
+		{
+			"success",
+			comments.Vote{
+				UserID:    userID,
+				State:     comments.StateVetted,
+				Token:     rec.Token,
+				CommentID: nr.Comment.CommentID,
+				Vote:      comments.VoteUpvote,
+				PublicKey: uid.Public.String(),
+				Signature: commentVoteSignature(t, uid, comments.StateVetted,
+					rec.Token, nr.Comment.CommentID, comments.VoteUpvote),
+			},
+			nil,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			// Vote Comment
+			vcEncoded, err := comments.EncodeVote(test.payload)
+			if err != nil {
+				t.Error(err)
+			}
+
+			// Execute plugin command
+			_, err = piPlugin.commentVote(string(vcEncoded))
+
+			// Parse plugin user error
+			var pluginUserError backend.PluginUserError
+			if errors.As(err, &pluginUserError) {
+				if test.wantErr == nil {
+					t.Errorf("got error %v, want nil", err)
+					return
+				}
+				wantErr := test.wantErr.(backend.PluginUserError)
+				if pluginUserError.ErrorCode != wantErr.ErrorCode {
+					t.Errorf("got error %v, want %v",
+						pluginUserError.ErrorCode,
+						wantErr.ErrorCode)
+				}
+				return
+			}
+
+			// Expectations not met
+			if err != test.wantErr {
+				t.Errorf("got error %v, want %v", err, test.wantErr)
+			}
+		})
+	}
 }
