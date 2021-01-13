@@ -336,6 +336,23 @@ func TestCmdEdit(t *testing.T) {
 			},
 		},
 		{
+			"wrong signature",
+			comments.Edit{
+				UserID:    nr.Comment.UserID,
+				State:     nr.Comment.State,
+				Token:     rec.Token,
+				ParentID:  nr.Comment.ParentID,
+				CommentID: nr.Comment.CommentID,
+				Comment:   commentEdit,
+				PublicKey: id.Public.String(),
+				Signature: commentSignature(t, id, comments.StateVetted,
+					rec.Token, commentEdit, nr.Comment.ParentID),
+			},
+			backend.PluginUserError{
+				ErrorCode: int(comments.ErrorStatusSignatureInvalid),
+			},
+		},
+		{
 			"invalid public key",
 			comments.Edit{
 				UserID:    nr.Comment.UserID,
@@ -581,12 +598,12 @@ func TestCmdDel(t *testing.T) {
 		{
 			"invalid token",
 			comments.Del{
-				State:     comments.StateUnvetted,
+				State:     nr.Comment.State,
 				Token:     "invalid",
 				CommentID: nr.Comment.CommentID,
 				Reason:    reason,
 				PublicKey: id.Public.String(),
-				Signature: commentSignature(t, id, comments.StateUnvetted,
+				Signature: commentSignature(t, id, nr.Comment.State,
 					"invalid", reason, nr.Comment.CommentID),
 			},
 			backend.PluginUserError{
@@ -596,7 +613,7 @@ func TestCmdDel(t *testing.T) {
 		{
 			"invalid signature",
 			comments.Del{
-				State:     comments.StateUnvetted,
+				State:     nr.Comment.State,
 				Token:     rec.Token,
 				CommentID: nr.Comment.CommentID,
 				Reason:    reason,
@@ -608,14 +625,29 @@ func TestCmdDel(t *testing.T) {
 			},
 		},
 		{
+			"wrong signature",
+			comments.Del{
+				State:     nr.Comment.State,
+				Token:     rec.Token,
+				CommentID: nr.Comment.CommentID,
+				Reason:    reason,
+				PublicKey: id.Public.String(),
+				Signature: commentSignature(t, id, comments.StateVetted,
+					rec.Token, reason, nr.Comment.CommentID),
+			},
+			backend.PluginUserError{
+				ErrorCode: int(comments.ErrorStatusSignatureInvalid),
+			},
+		},
+		{
 			"invalid public key",
 			comments.Del{
-				State:     comments.StateUnvetted,
+				State:     nr.Comment.State,
 				Token:     rec.Token,
 				CommentID: nr.Comment.CommentID,
 				Reason:    reason,
 				PublicKey: "invalid",
-				Signature: commentSignature(t, id, comments.StateUnvetted,
+				Signature: commentSignature(t, id, nr.Comment.State,
 					rec.Token, reason, nr.Comment.CommentID),
 			},
 			backend.PluginUserError{
@@ -625,12 +657,12 @@ func TestCmdDel(t *testing.T) {
 		{
 			"record not found",
 			comments.Del{
-				State:     comments.StateUnvetted,
+				State:     nr.Comment.State,
 				Token:     tokenRandom,
 				CommentID: nr.Comment.CommentID,
 				Reason:    reason,
 				PublicKey: id.Public.String(),
-				Signature: commentSignature(t, id, comments.StateUnvetted,
+				Signature: commentSignature(t, id, nr.Comment.State,
 					tokenRandom, reason, nr.Comment.CommentID),
 			},
 			backend.PluginUserError{
@@ -640,12 +672,12 @@ func TestCmdDel(t *testing.T) {
 		{
 			"comment id not found",
 			comments.Del{
-				State:     comments.StateUnvetted,
+				State:     nr.Comment.State,
 				Token:     rec.Token,
 				CommentID: 3,
 				Reason:    reason,
 				PublicKey: id.Public.String(),
-				Signature: commentSignature(t, id, comments.StateUnvetted,
+				Signature: commentSignature(t, id, nr.Comment.State,
 					rec.Token, reason, 3),
 			},
 			backend.PluginUserError{
@@ -655,12 +687,12 @@ func TestCmdDel(t *testing.T) {
 		{
 			"success",
 			comments.Del{
-				State:     comments.StateUnvetted,
+				State:     nr.Comment.State,
 				Token:     rec.Token,
 				CommentID: nr.Comment.CommentID,
 				Reason:    reason,
 				PublicKey: id.Public.String(),
-				Signature: commentSignature(t, id, comments.StateUnvetted,
+				Signature: commentSignature(t, id, nr.Comment.State,
 					rec.Token, reason, nr.Comment.CommentID),
 			},
 			nil,
@@ -834,12 +866,12 @@ func TestCmdVote(t *testing.T) {
 			"invalid token",
 			comments.Vote{
 				UserID:    voterUserID,
-				State:     comments.StateUnvetted,
+				State:     nr.Comment.State,
 				Token:     "invalid",
 				CommentID: nr.Comment.CommentID,
 				Vote:      comments.VoteUpvote,
 				PublicKey: id.Public.String(),
-				Signature: commentVoteSignature(t, id, comments.StateUnvetted,
+				Signature: commentVoteSignature(t, id, nr.Comment.State,
 					"invalid", nr.Comment.CommentID, comments.VoteUpvote),
 			},
 			backend.PluginUserError{
@@ -850,12 +882,12 @@ func TestCmdVote(t *testing.T) {
 			"invalid vote",
 			comments.Vote{
 				UserID:    voterUserID,
-				State:     comments.StateUnvetted,
+				State:     nr.Comment.State,
 				Token:     rec.Token,
 				CommentID: nr.Comment.CommentID,
 				Vote:      comments.VoteInvalid,
 				PublicKey: id.Public.String(),
-				Signature: commentVoteSignature(t, id, comments.StateUnvetted,
+				Signature: commentVoteSignature(t, id, nr.Comment.State,
 					rec.Token, nr.Comment.CommentID, comments.VoteInvalid),
 			},
 			backend.PluginUserError{
@@ -866,7 +898,7 @@ func TestCmdVote(t *testing.T) {
 			"invalid signature",
 			comments.Vote{
 				UserID:    voterUserID,
-				State:     comments.StateUnvetted,
+				State:     nr.Comment.State,
 				Token:     rec.Token,
 				CommentID: nr.Comment.CommentID,
 				Vote:      comments.VoteUpvote,
@@ -878,15 +910,31 @@ func TestCmdVote(t *testing.T) {
 			},
 		},
 		{
+			"wrong signature",
+			comments.Vote{
+				UserID:    voterUserID,
+				State:     nr.Comment.State,
+				Token:     rec.Token,
+				CommentID: nr.Comment.CommentID,
+				Vote:      comments.VoteUpvote,
+				PublicKey: id.Public.String(),
+				Signature: commentVoteSignature(t, id, comments.StateVetted,
+					rec.Token, nr.Comment.CommentID, comments.VoteUpvote),
+			},
+			backend.PluginUserError{
+				ErrorCode: int(comments.ErrorStatusSignatureInvalid),
+			},
+		},
+		{
 			"invalid public key",
 			comments.Vote{
 				UserID:    voterUserID,
-				State:     comments.StateUnvetted,
+				State:     nr.Comment.State,
 				Token:     rec.Token,
 				CommentID: nr.Comment.CommentID,
 				Vote:      comments.VoteUpvote,
 				PublicKey: "invalid",
-				Signature: commentVoteSignature(t, id, comments.StateUnvetted,
+				Signature: commentVoteSignature(t, id, nr.Comment.State,
 					rec.Token, nr.Comment.CommentID, comments.VoteUpvote),
 			},
 			backend.PluginUserError{
@@ -897,12 +945,12 @@ func TestCmdVote(t *testing.T) {
 			"comment id not found",
 			comments.Vote{
 				UserID:    voterUserID,
-				State:     comments.StateUnvetted,
+				State:     nr.Comment.State,
 				Token:     rec.Token,
 				CommentID: 3,
 				Vote:      comments.VoteUpvote,
 				PublicKey: id.Public.String(),
-				Signature: commentVoteSignature(t, id, comments.StateUnvetted,
+				Signature: commentVoteSignature(t, id, nr.Comment.State,
 					rec.Token, 3, comments.VoteUpvote),
 			},
 			backend.PluginUserError{
@@ -913,12 +961,12 @@ func TestCmdVote(t *testing.T) {
 			"max comment vote changes by user exceeded",
 			comments.Vote{
 				UserID:    userIDVotesExceeded,
-				State:     comments.StateUnvetted,
+				State:     nr.Comment.State,
 				Token:     rec.Token,
 				CommentID: ncvr.Comment.CommentID,
 				Vote:      comments.VoteUpvote,
 				PublicKey: id.Public.String(),
-				Signature: commentVoteSignature(t, id, comments.StateUnvetted,
+				Signature: commentVoteSignature(t, id, nr.Comment.State,
 					rec.Token, ncvr.Comment.CommentID, comments.VoteUpvote),
 			},
 			backend.PluginUserError{
@@ -929,12 +977,12 @@ func TestCmdVote(t *testing.T) {
 			"user voting on own comment",
 			comments.Vote{
 				UserID:    userID,
-				State:     comments.StateUnvetted,
+				State:     nr.Comment.State,
 				Token:     rec.Token,
 				CommentID: nr.Comment.CommentID,
 				Vote:      comments.VoteUpvote,
 				PublicKey: id.Public.String(),
-				Signature: commentVoteSignature(t, id, comments.StateUnvetted,
+				Signature: commentVoteSignature(t, id, nr.Comment.State,
 					rec.Token, nr.Comment.CommentID, comments.VoteUpvote),
 			},
 			backend.PluginUserError{
@@ -945,12 +993,12 @@ func TestCmdVote(t *testing.T) {
 			"success",
 			comments.Vote{
 				UserID:    voterUserID,
-				State:     comments.StateUnvetted,
+				State:     nr.Comment.State,
 				Token:     rec.Token,
 				CommentID: nr.Comment.CommentID,
 				Vote:      comments.VoteUpvote,
 				PublicKey: id.Public.String(),
-				Signature: commentVoteSignature(t, id, comments.StateUnvetted,
+				Signature: commentVoteSignature(t, id, nr.Comment.State,
 					rec.Token, nr.Comment.CommentID, comments.VoteUpvote),
 			},
 			nil,
