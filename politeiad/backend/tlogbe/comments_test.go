@@ -64,6 +64,22 @@ func TestCmdNew(t *testing.T) {
 		wantErr     error
 	}{
 		{
+			"invalid token",
+			comments.New{
+				UserID:    uuid.New().String(),
+				State:     comments.StateUnvetted,
+				Token:     "invalid",
+				ParentID:  parentID,
+				Comment:   comment,
+				PublicKey: uid.Public.String(),
+				Signature: commentSignature(t, uid, comments.StateUnvetted,
+					rec.Token, comment, parentID),
+			},
+			backend.PluginUserError{
+				ErrorCode: int(comments.ErrorStatusTokenInvalid),
+			},
+		},
+		{
 			"invalid comment state",
 			comments.New{
 				UserID:    uuid.New().String(),
@@ -80,19 +96,19 @@ func TestCmdNew(t *testing.T) {
 			},
 		},
 		{
-			"invalid token",
+			"record not found",
 			comments.New{
 				UserID:    uuid.New().String(),
 				State:     comments.StateUnvetted,
-				Token:     "invalid",
+				Token:     tokenRandom,
 				ParentID:  parentID,
 				Comment:   comment,
 				PublicKey: uid.Public.String(),
 				Signature: commentSignature(t, uid, comments.StateUnvetted,
-					rec.Token, comment, parentID),
+					tokenRandom, comment, parentID),
 			},
 			backend.PluginUserError{
-				ErrorCode: int(comments.ErrorStatusTokenInvalid),
+				ErrorCode: int(comments.ErrorStatusRecordNotFound),
 			},
 		},
 		{
@@ -156,22 +172,6 @@ func TestCmdNew(t *testing.T) {
 			},
 			backend.PluginUserError{
 				ErrorCode: int(comments.ErrorStatusParentIDInvalid),
-			},
-		},
-		{
-			"record not found",
-			comments.New{
-				UserID:    uuid.New().String(),
-				State:     comments.StateUnvetted,
-				Token:     tokenRandom,
-				ParentID:  parentID,
-				Comment:   comment,
-				PublicKey: uid.Public.String(),
-				Signature: commentSignature(t, uid, comments.StateUnvetted,
-					tokenRandom, comment, parentID),
-			},
-			backend.PluginUserError{
-				ErrorCode: int(comments.ErrorStatusRecordNotFound),
 			},
 		},
 		{
@@ -286,6 +286,23 @@ func TestCmdEdit(t *testing.T) {
 		wantErr     error
 	}{
 		{
+			"invalid token",
+			comments.Edit{
+				UserID:    nr.Comment.UserID,
+				State:     nr.Comment.State,
+				Token:     "invalid",
+				ParentID:  nr.Comment.ParentID,
+				CommentID: nr.Comment.CommentID,
+				Comment:   commentEdit,
+				PublicKey: id.Public.String(),
+				Signature: commentSignature(t, id, nr.Comment.State, "invalid",
+					commentEdit, nr.Comment.ParentID),
+			},
+			backend.PluginUserError{
+				ErrorCode: int(comments.ErrorStatusTokenInvalid),
+			},
+		},
+		{
 			"invalid comment state",
 			comments.Edit{
 				UserID:    nr.Comment.UserID,
@@ -303,20 +320,20 @@ func TestCmdEdit(t *testing.T) {
 			},
 		},
 		{
-			"invalid token",
+			"record not found",
 			comments.Edit{
 				UserID:    nr.Comment.UserID,
 				State:     nr.Comment.State,
-				Token:     "invalid",
+				Token:     tokenRandom,
 				ParentID:  nr.Comment.ParentID,
-				CommentID: nr.Comment.CommentID,
+				CommentID: nr.Comment.ParentID,
 				Comment:   commentEdit,
 				PublicKey: id.Public.String(),
-				Signature: commentSignature(t, id, nr.Comment.State, "invalid",
-					commentEdit, nr.Comment.ParentID),
+				Signature: commentSignature(t, id, nr.Comment.State,
+					tokenRandom, commentEdit, nr.Comment.ParentID),
 			},
 			backend.PluginUserError{
-				ErrorCode: int(comments.ErrorStatusTokenInvalid),
+				ErrorCode: int(comments.ErrorStatusRecordNotFound),
 			},
 		},
 		{
@@ -455,23 +472,6 @@ func TestCmdEdit(t *testing.T) {
 			},
 		},
 		{
-			"record not found",
-			comments.Edit{
-				UserID:    nr.Comment.UserID,
-				State:     nr.Comment.State,
-				Token:     tokenRandom,
-				ParentID:  nr.Comment.ParentID,
-				CommentID: nr.Comment.ParentID,
-				Comment:   commentEdit,
-				PublicKey: id.Public.String(),
-				Signature: commentSignature(t, id, nr.Comment.State,
-					tokenRandom, commentEdit, nr.Comment.ParentID),
-			},
-			backend.PluginUserError{
-				ErrorCode: int(comments.ErrorStatusRecordNotFound),
-			},
-		},
-		{
 			"success",
 			comments.Edit{
 				UserID:    nr.Comment.UserID,
@@ -581,6 +581,21 @@ func TestCmdDel(t *testing.T) {
 		wantErr     error
 	}{
 		{
+			"invalid token",
+			comments.Del{
+				State:     nr.Comment.State,
+				Token:     "invalid",
+				CommentID: nr.Comment.CommentID,
+				Reason:    reason,
+				PublicKey: id.Public.String(),
+				Signature: commentSignature(t, id, nr.Comment.State,
+					"invalid", reason, nr.Comment.CommentID),
+			},
+			backend.PluginUserError{
+				ErrorCode: int(comments.ErrorStatusTokenInvalid),
+			},
+		},
+		{
 			"invalid comment state",
 			comments.Del{
 				State:     comments.StateInvalid,
@@ -596,18 +611,18 @@ func TestCmdDel(t *testing.T) {
 			},
 		},
 		{
-			"invalid token",
+			"record not found",
 			comments.Del{
 				State:     nr.Comment.State,
-				Token:     "invalid",
+				Token:     tokenRandom,
 				CommentID: nr.Comment.CommentID,
 				Reason:    reason,
 				PublicKey: id.Public.String(),
 				Signature: commentSignature(t, id, nr.Comment.State,
-					"invalid", reason, nr.Comment.CommentID),
+					tokenRandom, reason, nr.Comment.CommentID),
 			},
 			backend.PluginUserError{
-				ErrorCode: int(comments.ErrorStatusTokenInvalid),
+				ErrorCode: int(comments.ErrorStatusRecordNotFound),
 			},
 		},
 		{
@@ -652,21 +667,6 @@ func TestCmdDel(t *testing.T) {
 			},
 			backend.PluginUserError{
 				ErrorCode: int(comments.ErrorStatusPublicKeyInvalid),
-			},
-		},
-		{
-			"record not found",
-			comments.Del{
-				State:     nr.Comment.State,
-				Token:     tokenRandom,
-				CommentID: nr.Comment.CommentID,
-				Reason:    reason,
-				PublicKey: id.Public.String(),
-				Signature: commentSignature(t, id, nr.Comment.State,
-					tokenRandom, reason, nr.Comment.CommentID),
-			},
-			backend.PluginUserError{
-				ErrorCode: int(comments.ErrorStatusRecordNotFound),
 			},
 		},
 		{
@@ -756,6 +756,7 @@ func TestCmdVote(t *testing.T) {
 	userID := uuid.New().String()
 	voterUserID := uuid.New().String()
 	userIDVotesExceeded := uuid.New().String()
+	tokenRandom := hex.EncodeToString(tokenFromTreeID(123))
 
 	id, err := identity.New()
 	if err != nil {
@@ -847,6 +848,22 @@ func TestCmdVote(t *testing.T) {
 		wantErr     error
 	}{
 		{
+			"invalid token",
+			comments.Vote{
+				UserID:    voterUserID,
+				State:     nr.Comment.State,
+				Token:     "invalid",
+				CommentID: nr.Comment.CommentID,
+				Vote:      comments.VoteUpvote,
+				PublicKey: id.Public.String(),
+				Signature: commentVoteSignature(t, id, nr.Comment.State,
+					"invalid", nr.Comment.CommentID, comments.VoteUpvote),
+			},
+			backend.PluginUserError{
+				ErrorCode: int(comments.ErrorStatusTokenInvalid),
+			},
+		},
+		{
 			"invalid comment state",
 			comments.Vote{
 				UserID:    voterUserID,
@@ -863,19 +880,19 @@ func TestCmdVote(t *testing.T) {
 			},
 		},
 		{
-			"invalid token",
+			"record not found",
 			comments.Vote{
 				UserID:    voterUserID,
 				State:     nr.Comment.State,
-				Token:     "invalid",
+				Token:     tokenRandom,
 				CommentID: nr.Comment.CommentID,
 				Vote:      comments.VoteUpvote,
 				PublicKey: id.Public.String(),
 				Signature: commentVoteSignature(t, id, nr.Comment.State,
-					"invalid", nr.Comment.CommentID, comments.VoteUpvote),
+					tokenRandom, nr.Comment.CommentID, comments.VoteUpvote),
 			},
 			backend.PluginUserError{
-				ErrorCode: int(comments.ErrorStatusTokenInvalid),
+				ErrorCode: int(comments.ErrorStatusRecordNotFound),
 			},
 		},
 		{

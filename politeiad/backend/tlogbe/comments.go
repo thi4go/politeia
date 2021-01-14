@@ -827,23 +827,34 @@ func (p *commentsPlugin) cmdNew(payload string) (string, error) {
 		return "", err
 	}
 
-	// Verify state
+	// Verify token
+	token, err := util.ConvertStringToken(n.Token)
+	if err != nil {
+		return "", backend.PluginUserError{
+			PluginID:  comments.ID,
+			ErrorCode: int(comments.ErrorStatusTokenInvalid),
+		}
+	}
+
+	// Verify state and verify record exists
+	var exists bool
 	switch n.State {
-	case comments.StateUnvetted, comments.StateVetted:
-		// Allowed; continue
+	case comments.StateUnvetted:
+		exists = p.backend.UnvettedExists(token)
+	case comments.StateVetted:
+		exists = p.backend.VettedExists(token)
 	default:
+		// State is not valid
 		return "", backend.PluginUserError{
 			PluginID:  comments.ID,
 			ErrorCode: int(comments.ErrorStatusStateInvalid),
 		}
 	}
-
-	// Verify token
-	token, err := tokenDecodeAnyLength(n.Token)
-	if err != nil {
+	if !exists {
+		// Record does not exist
 		return "", backend.PluginUserError{
 			PluginID:  comments.ID,
-			ErrorCode: int(comments.ErrorStatusTokenInvalid),
+			ErrorCode: int(comments.ErrorStatusRecordNotFound),
 		}
 	}
 
@@ -905,12 +916,6 @@ func (p *commentsPlugin) cmdNew(payload string) (string, error) {
 	// Save comment
 	merkleHash, err := p.commentAddSave(ca)
 	if err != nil {
-		if errors.Is(err, errRecordNotFound) {
-			return "", backend.PluginUserError{
-				PluginID:  comments.ID,
-				ErrorCode: int(comments.ErrorStatusRecordNotFound),
-			}
-		}
 		return "", fmt.Errorf("commentAddSave: %v", err)
 	}
 
@@ -959,23 +964,34 @@ func (p *commentsPlugin) cmdEdit(payload string) (string, error) {
 		return "", err
 	}
 
-	// Verify state
+	// Verify token
+	token, err := util.ConvertStringToken(e.Token)
+	if err != nil {
+		return "", backend.PluginUserError{
+			PluginID:  comments.ID,
+			ErrorCode: int(comments.ErrorStatusTokenInvalid),
+		}
+	}
+
+	// Verify state and verify record exists
+	var exists bool
 	switch e.State {
-	case comments.StateUnvetted, comments.StateVetted:
-		// Allowed; continue
+	case comments.StateUnvetted:
+		exists = p.backend.UnvettedExists(token)
+	case comments.StateVetted:
+		exists = p.backend.VettedExists(token)
 	default:
+		// State is not valid
 		return "", backend.PluginUserError{
 			PluginID:  comments.ID,
 			ErrorCode: int(comments.ErrorStatusStateInvalid),
 		}
 	}
-
-	// Verify token
-	token, err := tokenDecodeAnyLength(e.Token)
-	if err != nil {
+	if !exists {
+		// Record does not exist
 		return "", backend.PluginUserError{
 			PluginID:  comments.ID,
-			ErrorCode: int(comments.ErrorStatusTokenInvalid),
+			ErrorCode: int(comments.ErrorStatusRecordNotFound),
 		}
 	}
 
@@ -1011,12 +1027,6 @@ func (p *commentsPlugin) cmdEdit(payload string) (string, error) {
 	// Get the existing comment
 	cs, err := p.comments(e.State, token, *idx, []uint32{e.CommentID})
 	if err != nil {
-		if errors.Is(err, errRecordNotFound) {
-			return "", backend.PluginUserError{
-				PluginID:  comments.ID,
-				ErrorCode: int(comments.ErrorStatusRecordNotFound),
-			}
-		}
 		return "", fmt.Errorf("comments %v: %v", e.CommentID, err)
 	}
 	existing, ok := cs[e.CommentID]
@@ -1116,23 +1126,34 @@ func (p *commentsPlugin) cmdDel(payload string) (string, error) {
 		return "", err
 	}
 
-	// Verify state
+	// Verify token
+	token, err := util.ConvertStringToken(d.Token)
+	if err != nil {
+		return "", backend.PluginUserError{
+			PluginID:  comments.ID,
+			ErrorCode: int(comments.ErrorStatusTokenInvalid),
+		}
+	}
+
+	// Verify state and verify record exists
+	var exists bool
 	switch d.State {
-	case comments.StateUnvetted, comments.StateVetted:
-		// Allowed; continue
+	case comments.StateUnvetted:
+		exists = p.backend.UnvettedExists(token)
+	case comments.StateVetted:
+		exists = p.backend.VettedExists(token)
 	default:
+		// State is not valid
 		return "", backend.PluginUserError{
 			PluginID:  comments.ID,
 			ErrorCode: int(comments.ErrorStatusStateInvalid),
 		}
 	}
-
-	// Verify token
-	token, err := tokenDecodeAnyLength(d.Token)
-	if err != nil {
+	if !exists {
+		// Record does not exist
 		return "", backend.PluginUserError{
 			PluginID:  comments.ID,
-			ErrorCode: int(comments.ErrorStatusTokenInvalid),
+			ErrorCode: int(comments.ErrorStatusRecordNotFound),
 		}
 	}
 
@@ -1159,12 +1180,6 @@ func (p *commentsPlugin) cmdDel(payload string) (string, error) {
 	// Get the existing comment
 	cs, err := p.comments(d.State, token, *idx, []uint32{d.CommentID})
 	if err != nil {
-		if errors.Is(err, errRecordNotFound) {
-			return "", backend.PluginUserError{
-				PluginID:  comments.ID,
-				ErrorCode: int(comments.ErrorStatusRecordNotFound),
-			}
-		}
 		return "", fmt.Errorf("comments %v: %v", d.CommentID, err)
 	}
 	existing, ok := cs[d.CommentID]
@@ -1301,23 +1316,34 @@ func (p *commentsPlugin) cmdVote(payload string) (string, error) {
 		return "", err
 	}
 
-	// Verify state
+	// Verify token
+	token, err := util.ConvertStringToken(v.Token)
+	if err != nil {
+		return "", backend.PluginUserError{
+			PluginID:  comments.ID,
+			ErrorCode: int(comments.ErrorStatusTokenInvalid),
+		}
+	}
+
+	// Verify state and verify record exists
+	var exists bool
 	switch v.State {
-	case comments.StateUnvetted, comments.StateVetted:
-		// Allowed; continue
+	case comments.StateUnvetted:
+		exists = p.backend.UnvettedExists(token)
+	case comments.StateVetted:
+		exists = p.backend.VettedExists(token)
 	default:
+		// State is not valid
 		return "", backend.PluginUserError{
 			PluginID:  comments.ID,
 			ErrorCode: int(comments.ErrorStatusStateInvalid),
 		}
 	}
-
-	// Verify token
-	token, err := tokenDecodeAnyLength(v.Token)
-	if err != nil {
+	if !exists {
+		// Record does not exist
 		return "", backend.PluginUserError{
 			PluginID:  comments.ID,
-			ErrorCode: int(comments.ErrorStatusTokenInvalid),
+			ErrorCode: int(comments.ErrorStatusRecordNotFound),
 		}
 	}
 
@@ -1458,23 +1484,34 @@ func (p *commentsPlugin) cmdGet(payload string) (string, error) {
 		return "", err
 	}
 
-	// Verify state
-	switch g.State {
-	case comments.StateUnvetted, comments.StateVetted:
-		// Allowed; continue
-	default:
+	// Verify token
+	token, err := util.ConvertStringToken(g.Token)
+	if err != nil {
 		return "", backend.PluginUserError{
 			PluginID:  comments.ID,
 			ErrorCode: int(comments.ErrorStatusTokenInvalid),
 		}
 	}
 
-	// Verify token
-	token, err := tokenDecodeAnyLength(g.Token)
-	if err != nil {
+	// Verify state and verify record exists
+	var exists bool
+	switch g.State {
+	case comments.StateUnvetted:
+		exists = p.backend.UnvettedExists(token)
+	case comments.StateVetted:
+		exists = p.backend.VettedExists(token)
+	default:
+		// State is not valid
 		return "", backend.PluginUserError{
 			PluginID:  comments.ID,
-			ErrorCode: int(comments.ErrorStatusTokenInvalid),
+			ErrorCode: int(comments.ErrorStatusStateInvalid),
+		}
+	}
+	if !exists {
+		// Record does not exist
+		return "", backend.PluginUserError{
+			PluginID:  comments.ID,
+			ErrorCode: int(comments.ErrorStatusRecordNotFound),
 		}
 	}
 
@@ -1487,12 +1524,6 @@ func (p *commentsPlugin) cmdGet(payload string) (string, error) {
 	// Get comments
 	cs, err := p.comments(g.State, token, *idx, g.CommentIDs)
 	if err != nil {
-		if errors.Is(err, errRecordNotFound) {
-			return "", backend.PluginUserError{
-				PluginID:  comments.ID,
-				ErrorCode: int(comments.ErrorStatusRecordNotFound),
-			}
-		}
 		return "", fmt.Errorf("comments: %v", err)
 	}
 
@@ -1517,23 +1548,34 @@ func (p *commentsPlugin) cmdGetAll(payload string) (string, error) {
 		return "", err
 	}
 
-	// Verify state
-	switch ga.State {
-	case comments.StateUnvetted, comments.StateVetted:
-		// Allowed; continue
-	default:
+	// Verify token
+	token, err := util.ConvertStringToken(ga.Token)
+	if err != nil {
 		return "", backend.PluginUserError{
 			PluginID:  comments.ID,
 			ErrorCode: int(comments.ErrorStatusTokenInvalid),
 		}
 	}
 
-	// Verify token
-	token, err := tokenDecodeAnyLength(ga.Token)
-	if err != nil {
+	// Verify state and verify record exists
+	var exists bool
+	switch ga.State {
+	case comments.StateUnvetted:
+		exists = p.backend.UnvettedExists(token)
+	case comments.StateVetted:
+		exists = p.backend.VettedExists(token)
+	default:
+		// State is not valid
 		return "", backend.PluginUserError{
 			PluginID:  comments.ID,
-			ErrorCode: int(comments.ErrorStatusTokenInvalid),
+			ErrorCode: int(comments.ErrorStatusStateInvalid),
+		}
+	}
+	if !exists {
+		// Record does not exist
+		return "", backend.PluginUserError{
+			PluginID:  comments.ID,
+			ErrorCode: int(comments.ErrorStatusRecordNotFound),
 		}
 	}
 
@@ -1552,12 +1594,6 @@ func (p *commentsPlugin) cmdGetAll(payload string) (string, error) {
 	// Get comments
 	c, err := p.comments(ga.State, token, *idx, commentIDs)
 	if err != nil {
-		if errors.Is(err, errRecordNotFound) {
-			return "", backend.PluginUserError{
-				PluginID:  comments.ID,
-				ErrorCode: int(comments.ErrorStatusRecordNotFound),
-			}
-		}
 		return "", fmt.Errorf("comments: %v", err)
 	}
 
@@ -1593,23 +1629,34 @@ func (p *commentsPlugin) cmdGetVersion(payload string) (string, error) {
 		return "", err
 	}
 
-	// Verify state
-	switch gv.State {
-	case comments.StateUnvetted, comments.StateVetted:
-		// Allowed; continue
-	default:
+	// Verify token
+	token, err := util.ConvertStringToken(gv.Token)
+	if err != nil {
 		return "", backend.PluginUserError{
 			PluginID:  comments.ID,
 			ErrorCode: int(comments.ErrorStatusTokenInvalid),
 		}
 	}
 
-	// Verify token
-	token, err := tokenDecodeAnyLength(gv.Token)
-	if err != nil {
+	// Verify state and verify record exists
+	var exists bool
+	switch gv.State {
+	case comments.StateUnvetted:
+		exists = p.backend.UnvettedExists(token)
+	case comments.StateVetted:
+		exists = p.backend.VettedExists(token)
+	default:
+		// State is not valid
 		return "", backend.PluginUserError{
 			PluginID:  comments.ID,
-			ErrorCode: int(comments.ErrorStatusTokenInvalid),
+			ErrorCode: int(comments.ErrorStatusStateInvalid),
+		}
+	}
+	if !exists {
+		// Record does not exist
+		return "", backend.PluginUserError{
+			PluginID:  comments.ID,
+			ErrorCode: int(comments.ErrorStatusRecordNotFound),
 		}
 	}
 
@@ -1648,12 +1695,6 @@ func (p *commentsPlugin) cmdGetVersion(payload string) (string, error) {
 	// Get comment add record
 	adds, err := p.commentAdds(gv.State, token, [][]byte{merkle})
 	if err != nil {
-		if errors.Is(err, errRecordNotFound) {
-			return "", backend.PluginUserError{
-				PluginID:  comments.ID,
-				ErrorCode: int(comments.ErrorStatusRecordNotFound),
-			}
-		}
 		return "", fmt.Errorf("commentAdds: %v", err)
 	}
 	if len(adds) != 1 {
@@ -1686,23 +1727,34 @@ func (p *commentsPlugin) cmdCount(payload string) (string, error) {
 		return "", err
 	}
 
-	// Verify state
-	switch c.State {
-	case comments.StateUnvetted, comments.StateVetted:
-		// Allowed; continue
-	default:
+	// Verify token
+	token, err := util.ConvertStringToken(c.Token)
+	if err != nil {
 		return "", backend.PluginUserError{
 			PluginID:  comments.ID,
 			ErrorCode: int(comments.ErrorStatusTokenInvalid),
 		}
 	}
 
-	// Verify token
-	token, err := tokenDecodeAnyLength(c.Token)
-	if err != nil {
+	// Verify state and verify record exists
+	var exists bool
+	switch c.State {
+	case comments.StateUnvetted:
+		exists = p.backend.UnvettedExists(token)
+	case comments.StateVetted:
+		exists = p.backend.VettedExists(token)
+	default:
+		// State is not valid
 		return "", backend.PluginUserError{
 			PluginID:  comments.ID,
-			ErrorCode: int(comments.ErrorStatusTokenInvalid),
+			ErrorCode: int(comments.ErrorStatusStateInvalid),
+		}
+	}
+	if !exists {
+		// Record does not exist
+		return "", backend.PluginUserError{
+			PluginID:  comments.ID,
+			ErrorCode: int(comments.ErrorStatusRecordNotFound),
 		}
 	}
 
@@ -1733,23 +1785,34 @@ func (p *commentsPlugin) cmdVotes(payload string) (string, error) {
 		return "", err
 	}
 
-	// Verify state
-	switch v.State {
-	case comments.StateUnvetted, comments.StateVetted:
-		// Allowed; continue
-	default:
+	// Verify token
+	token, err := util.ConvertStringToken(v.Token)
+	if err != nil {
 		return "", backend.PluginUserError{
 			PluginID:  comments.ID,
 			ErrorCode: int(comments.ErrorStatusTokenInvalid),
 		}
 	}
 
-	// Verify token
-	token, err := tokenDecodeAnyLength(v.Token)
-	if err != nil {
+	// Verify state and verify record exists
+	var exists bool
+	switch v.State {
+	case comments.StateUnvetted:
+		exists = p.backend.UnvettedExists(token)
+	case comments.StateVetted:
+		exists = p.backend.VettedExists(token)
+	default:
+		// State is not valid
 		return "", backend.PluginUserError{
 			PluginID:  comments.ID,
-			ErrorCode: int(comments.ErrorStatusTokenInvalid),
+			ErrorCode: int(comments.ErrorStatusStateInvalid),
+		}
+	}
+	if !exists {
+		// Record does not exist
+		return "", backend.PluginUserError{
+			PluginID:  comments.ID,
+			ErrorCode: int(comments.ErrorStatusRecordNotFound),
 		}
 	}
 
@@ -1778,12 +1841,6 @@ func (p *commentsPlugin) cmdVotes(payload string) (string, error) {
 	// Lookup votes
 	votes, err := p.commentVotes(v.State, token, merkles)
 	if err != nil {
-		if errors.Is(err, errRecordNotFound) {
-			return "", backend.PluginUserError{
-				PluginID:  comments.ID,
-				ErrorCode: int(comments.ErrorStatusRecordNotFound),
-			}
-		}
 		return "", fmt.Errorf("commentVotes: %v", err)
 	}
 
@@ -1809,23 +1866,34 @@ func (p *commentsPlugin) cmdTimestamps(payload string) (string, error) {
 		return "", err
 	}
 
-	// Verify state
-	switch t.State {
-	case comments.StateUnvetted, comments.StateVetted:
-		// Allowed; continue
-	default:
+	// Verify token
+	token, err := util.ConvertStringToken(t.Token)
+	if err != nil {
 		return "", backend.PluginUserError{
 			PluginID:  comments.ID,
 			ErrorCode: int(comments.ErrorStatusTokenInvalid),
 		}
 	}
 
-	// Verify token
-	token, err := tokenDecodeAnyLength(t.Token)
-	if err != nil {
+	// Verify state and verify record exists
+	var exists bool
+	switch t.State {
+	case comments.StateUnvetted:
+		exists = p.backend.UnvettedExists(token)
+	case comments.StateVetted:
+		exists = p.backend.VettedExists(token)
+	default:
+		// State is not valid
 		return "", backend.PluginUserError{
 			PluginID:  comments.ID,
-			ErrorCode: int(comments.ErrorStatusTokenInvalid),
+			ErrorCode: int(comments.ErrorStatusStateInvalid),
+		}
+	}
+	if !exists {
+		// Record does not exist
+		return "", backend.PluginUserError{
+			PluginID:  comments.ID,
+			ErrorCode: int(comments.ErrorStatusRecordNotFound),
 		}
 	}
 
