@@ -7,6 +7,7 @@ package tlogbe
 import (
 	"encoding/hex"
 	"errors"
+	"strconv"
 	"testing"
 
 	"github.com/decred/politeia/politeiad/api/v1/identity"
@@ -14,6 +15,18 @@ import (
 	"github.com/decred/politeia/politeiad/plugins/comments"
 	"github.com/google/uuid"
 )
+
+func commentVoteSignature(t *testing.T, uid *identity.FullIdentity, state comments.StateT, token string, id uint32, vote comments.VoteT) string {
+	t.Helper()
+
+	// Create vote signature
+	txt := strconv.Itoa(int(state)) + token +
+		strconv.FormatUint(uint64(id), 10) +
+		strconv.FormatInt(int64(vote), 10)
+	b := uid.SignMessage([]byte(txt))
+
+	return hex.EncodeToString(b[:])
+}
 
 func TestCmdNew(t *testing.T) {
 	tlogBackend, cleanup := newTestTlogBackend(t)
